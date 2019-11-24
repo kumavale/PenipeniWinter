@@ -1,0 +1,269 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayManager : MonoBehaviour
+{
+    [SerializeField]
+    private int FIELD_WIDTH  = 4 + 2;
+    [SerializeField]
+    private int FIELD_HEIGHT = 11 + 1;
+
+    [SerializeField]
+    private GameObject[] penis;
+
+    private Peni[,] field;
+
+    public enum BlockKind {
+        NONE,
+        PENI_0,  // purple
+        PENI_1,  // green
+        PENI_2,  // blue
+        WALL,
+    }
+
+    public struct Peni {
+        public BlockKind kind;
+        public GameObject obj;
+
+        public Peni(BlockKind k, GameObject o) {
+            this.kind = k;
+            this.obj  = o;
+        }
+    }
+
+    Peni current_peni;
+    int current_x, current_y;
+    bool key_lock = false;
+
+    float fall_spead = -0.01f;
+
+    Vector2[] directions = {
+        new Vector2( 0, -1),
+        new Vector2(-1,  0),
+        new Vector2( 0,  1),
+        new Vector2( 1,  0),
+    };
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        // Initialized field
+        field = new Peni[FIELD_HEIGHT, FIELD_WIDTH];
+        checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                field[y, x] = new Peni(BlockKind.NONE, null);
+            }
+        }
+        // Side wall
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            field[y, 0].kind = BlockKind.WALL;
+            field[y, FIELD_WIDTH-1].kind = BlockKind.WALL;
+        }
+        // Under wall
+        for (int x = 0; x < FIELD_WIDTH; ++x) {
+            field[FIELD_HEIGHT-1, x].kind = BlockKind.WALL;
+        }
+
+        current_peni = spawnNext();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+            if (!key_lock) {
+                key_lock = true;
+                StartCoroutine(move_x(-1f));
+            }
+        } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
+            if (!key_lock) {
+                key_lock = true;
+                StartCoroutine(move_x(1f));
+            }
+        } else if (Input.GetKey(KeyCode.DownArrow)) {
+            if (can_fall(-0.2f)) {
+                move_y(-0.2f);
+            } else if (!key_lock) {
+                key_lock = true;
+                fix_peni();
+                eval();
+                current_peni = spawnNext();
+                key_lock = false;
+            }
+        }
+
+        if (can_fall(fall_spead)) {
+            move_y(fall_spead);
+        } else if (!key_lock) {
+            key_lock = true;
+            fix_peni();
+            eval();
+            current_peni = spawnNext();
+            key_lock = false;
+        }
+    }
+
+    private bool[,] checked_field;
+    int get_peni_connected_count(int x, int y, BlockKind k, int cnt) {
+        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
+            || checked_field[y, x] || field[y, x].kind != k)
+        {
+            return cnt;
+        }
+
+        ++cnt;
+        checked_field[y, x] = true;
+
+        for (int d = 0; d < 4; ++d) {
+            int x2 = x + (int)directions[d].x;
+            int y2 = y + (int)directions[d].y;
+            cnt = get_peni_connected_count(x2, y2, k, cnt);
+        }
+
+        return cnt;
+    }
+
+    void erase_peni(int x, int y, Peni p) {
+        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
+            || field[y, x].kind != p.kind)
+        {
+            return;
+        }
+
+        Destroy(field[y, x].obj);
+        field[y, x].kind = BlockKind.NONE;
+        field[y, x].obj  = null;
+
+        for (int d = 0; d < 4; ++d) {
+            int x2 = x + (int)directions[d].x;
+            int y2 = y + (int)directions[d].y;
+            erase_peni(x2, y2, p);
+        }
+    }
+
+    bool fall_lock = false;
+    bool fall() {
+        bool falled = false;
+
+        for (int y = FIELD_HEIGHT-2; y > 0; --y) {
+            for (int x = 1; x < FIELD_WIDTH-1; ++x) {
+                if (field[y, x].kind == BlockKind.NONE
+                    && field[y-1, x].kind != BlockKind.NONE)
+                {
+                    fall_lock = true;
+
+                    field[y, x] = field[y-1, x];
+                    StartCoroutine(smooth_fall(field[y, x], -1f));
+
+                    field[y-1, x].kind = BlockKind.NONE;
+                    field[y-1, x].obj  = null;
+                    falled = true;
+                }
+            }
+        }
+
+        // TODO コルーチン(落下処理)が終わってからリターンしたい
+
+        return falled;
+    }
+
+    IEnumerator smooth_fall(Peni p, float distance) {
+        const int speed = 60;
+
+        for (int _i = 0; _i < speed; ++_i) {
+            Vector3 pos = p.obj.transform.position;
+            pos.y += distance / speed;
+            p.obj.transform.position = pos;
+            yield return null;
+        }
+
+        fall_lock = false;
+    }
+
+    void eval() {
+        do {
+            for (int y = 0; y < FIELD_HEIGHT; ++y) {
+                for (int x = 0; x < FIELD_WIDTH; ++x) {
+                    checked_field[y, x] = false;
+                }
+            }
+
+            for (int y = 0; y < FIELD_HEIGHT-1; ++y) {
+                for (int x = 1; x < FIELD_WIDTH-1; ++x) {
+                    if (field[y, x].kind != BlockKind.NONE) {
+                        if (get_peni_connected_count(x, y, field[y, x].kind, 0) >= 3) {
+                            erase_peni(x, y, field[y, x]);
+                        }
+                    }
+                }
+            }
+        } while (fall());
+    }
+
+    void fix_peni() {
+        int y = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y)) + 1;
+        Vector3 pos = current_peni.obj.transform.position;
+        pos.y = Mathf.Floor(current_peni.obj.transform.position.y);
+        current_peni.obj.transform.position = pos;
+        field[y, current_x].kind = current_peni.kind;
+        field[y, current_x].obj = current_peni.obj;
+    }
+
+    bool can_fall(float y) {
+        int y2 = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y + y));
+        return field[y2+1, current_x].kind == BlockKind.NONE;
+    }
+
+    IEnumerator move_x(float distance) {
+        int x = distance <= 0.0f ? -1 : 1;
+        const int speed = 5;
+
+        if (field[current_y, current_x + x].kind == BlockKind.NONE) {
+            for (int _i = 0; _i < speed; ++_i) {
+                Vector3 pos = current_peni.obj.transform.position;
+                pos.x += distance / speed;
+                current_peni.obj.transform.position = pos;
+                yield return null;
+            }
+
+            current_x += x;
+        }
+
+        key_lock = false;
+    }
+
+    void move_y(float distance) {
+        int y = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y + distance));
+
+        Vector3 pos = current_peni.obj.transform.position;
+        pos.y += distance;
+        current_peni.obj.transform.position = pos;
+
+        current_y = y+1;
+    }
+
+    Peni spawnNext() {
+        // Random index
+        int i = Random.Range(0, penis.Length);
+
+        // Spawn peni at current position
+        Vector3 pos = transform.position;
+        pos.x += 1.0f;
+        GameObject obj = (GameObject)Instantiate(penis[i], pos, Quaternion.identity);
+
+        BlockKind kind;
+        switch (i) {
+            case 0:  kind = BlockKind.PENI_0; break;
+            case 1:  kind = BlockKind.PENI_1; break;
+            case 2:  kind = BlockKind.PENI_2; break;
+            default: kind = BlockKind.NONE; break;
+        }
+
+        current_x = 2;
+        current_y = 0;
+
+        return new Peni(kind, obj);
+    }
+}
