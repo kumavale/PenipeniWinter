@@ -5,9 +5,9 @@ using UnityEngine;
 public class PlayManager : MonoBehaviour
 {
     [SerializeField]
-    private int FIELD_WIDTH  = 4 + 2;   //  4 + 壁
+    private int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
     [SerializeField]
-    private int FIELD_HEIGHT = 11 + 1;  // 11 + 壁
+    private int FIELD_HEIGHT = 9 + 1;  // 9 + 壁
 
     [SerializeField]
     private GameObject[] penis;  // peni_0, peni_1, peni_2
@@ -48,6 +48,8 @@ public class PlayManager : MonoBehaviour
         new Vector2( 0,  1),  // Down
         new Vector2( 1,  0),  // Right
     };
+
+    Vector2 out_pos = new Vector2(2, 2);
 
     /// Start is called before the first frame update
     void Start()
@@ -103,14 +105,12 @@ public class PlayManager : MonoBehaviour
                     move_y(-0.2f);
                 } else if (!key_lock) {
                     key_lock = true;
-                    //fall_lock = true;
                     fix_peni();
                     eval();
                     fall_lock = fall();
                     if (!fall_lock) {
                         current_peni = spawnNext();
                     }
-                    //key_lock = false;
                 }
             }
 
@@ -118,15 +118,13 @@ public class PlayManager : MonoBehaviour
             if (can_fall(fall_spead)) {
                 move_y(fall_spead);
             } else if (!key_lock) {
-                //key_lock = true;
-                //fall_lock = true;
+                key_lock = true;
                 fix_peni();
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
                     current_peni = spawnNext();
                 }
-                //key_lock = false;
             }
 
         }
@@ -193,10 +191,6 @@ public class PlayManager : MonoBehaviour
 
                         field[y, x] = field[y-1, x];
                         StartCoroutine(smooth_fall(field[y, x], -1f));
-                        //Vector3 pos = field[y, x].obj.transform.position;
-                        //pos.y += -1f;
-                        //field[y, x].obj.transform.position = pos;
-              //fall_end = true;
 
                         field[y-1, x].kind = BlockKind.NONE;
                         field[y-1, x].obj  = null;
@@ -219,30 +213,27 @@ public class PlayManager : MonoBehaviour
             yield return null;
         }
 
-        //fall_lock = false;
         fall_end = true;
     }
 
     /// 評価
     /// "ぺに"を削除できるなら削除し, 整地する
     void eval() {
-        //do {
-            for (int y = 0; y < FIELD_HEIGHT; ++y) {
-                for (int x = 0; x < FIELD_WIDTH; ++x) {
-                    checked_field[y, x] = false;
-                }
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                checked_field[y, x] = false;
             }
+        }
 
-            for (int y = 0; y < FIELD_HEIGHT-1; ++y) {
-                for (int x = 1; x < FIELD_WIDTH-1; ++x) {
-                    if (field[y, x].kind != BlockKind.NONE) {
-                        if (get_peni_connected_count(x, y, field[y, x].kind, 0) >= 3) {
-                            erase_peni(x, y, field[y, x]);
-                        }
+        for (int y = 0; y < FIELD_HEIGHT-1; ++y) {
+            for (int x = 1; x < FIELD_WIDTH-1; ++x) {
+                if (field[y, x].kind != BlockKind.NONE) {
+                    if (get_peni_connected_count(x, y, field[y, x].kind, 0) >= 3) {
+                        erase_peni(x, y, field[y, x]);
                     }
                 }
             }
-        //} while (fall());
+        }
     }
 
     /// ぺにをfieldに固定
@@ -253,6 +244,12 @@ public class PlayManager : MonoBehaviour
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
+
+        // Check GameOver
+        if (current_x == out_pos.x && y == out_pos.y) {
+            fall_lock = true;
+            Debug.Log("GameOver");
+        }
     }
 
     /// 落下可能か否か
