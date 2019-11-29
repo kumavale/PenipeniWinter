@@ -10,9 +10,18 @@ public class PlayManager : MonoBehaviour
     private int FIELD_HEIGHT = 9 + 1;  // 9 + 壁
 
     [SerializeField]
-    private GameObject[] penis;  // peni_0, peni_1, peni_2
+    private GameObject[] penis = default;  // peni_0, peni_1, peni_2
+
+    [SerializeField]
+    private Player player = Player.PLAYER_1;
 
     private Peni[,] field;  // FIELD_HEIGHT x FIELD_WIDTH
+
+    public enum Player {
+        PLAYER_1,
+        PLAYER_2,
+        CPU,
+    }
 
     public enum BlockKind {
         NONE,
@@ -39,6 +48,7 @@ public class PlayManager : MonoBehaviour
     bool key_lock = false;
     bool fall_lock = false;
     bool fall_end = true;
+    bool fall_bottom = false;
 
     const float fall_spead = -0.01f;  // 落下スピード / 1frame
 
@@ -84,32 +94,94 @@ public class PlayManager : MonoBehaviour
                 fall_lock = fall();
                 if (!fall_lock) {
                     current_peni = spawnNext();
+                    if (player == Player.CPU) {
+                        switch (Random.Range(0, 4)) {
+                            case 0: /* Do nothing */ break;
+                            case 1: StartCoroutine(move_x(-1f)); break;
+                            case 2: StartCoroutine(move_x(1f));  break;
+                            case 3: StartCoroutine(move_x(2f));  break;
+                        }
+                    }
                 }
             }
         } else {
-            // LeftArrow key
-            if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-                if (!key_lock) {
-                    key_lock = true;
-                    StartCoroutine(move_x(-1f));
+            if (player == Player.PLAYER_1) {
+                // A key
+                if (Input.GetKeyDown(KeyCode.A)) {
+                    if (!key_lock) {
+                        key_lock = true;
+                        StartCoroutine(move_x(-1f));
+                    }
+                // D key
+                } else if (Input.GetKeyDown(KeyCode.D)) {
+                    if (!key_lock) {
+                        key_lock = true;
+                        StartCoroutine(move_x(1f));
+                    }
+                // S key
+                } else if (Input.GetKey(KeyCode.S)) {
+                    if (can_fall(-0.2f)) {
+                        move_y(-0.2f);
+                    } else if (!key_lock) {
+                        key_lock = true;
+                        fix_peni();
+                        eval();
+                        fall_lock = fall();
+                        if (!fall_lock) {
+                            current_peni = spawnNext();
+                        }
+                    }
                 }
-            // RightArrow key
-            } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-                if (!key_lock) {
-                    key_lock = true;
-                    StartCoroutine(move_x(1f));
+            } else if (player == Player.PLAYER_2) {
+                // LeftArrow key
+                if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+                    if (!key_lock) {
+                        key_lock = true;
+                        StartCoroutine(move_x(-1f));
+                    }
+                // RightArrow key
+                } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
+                    if (!key_lock) {
+                        key_lock = true;
+                        StartCoroutine(move_x(1f));
+                    }
+                // DownArrow key
+                } else if (Input.GetKey(KeyCode.DownArrow)) {
+                    if (can_fall(-0.2f)) {
+                        move_y(-0.2f);
+                    } else if (!key_lock) {
+                        key_lock = true;
+                        fix_peni();
+                        eval();
+                        fall_lock = fall();
+                        if (!fall_lock) {
+                            current_peni = spawnNext();
+                        }
+                    }
                 }
-            // DownArrow key
-            } else if (Input.GetKey(KeyCode.DownArrow)) {
-                if (can_fall(-0.2f)) {
-                    move_y(-0.2f);
-                } else if (!key_lock) {
-                    key_lock = true;
-                    fix_peni();
-                    eval();
-                    fall_lock = fall();
-                    if (!fall_lock) {
-                        current_peni = spawnNext();
+            } else {
+                if (fall_bottom) {
+                    if (can_fall(-0.2f)) {
+                        move_y(-0.2f);
+                    } else {
+                        fix_peni();
+                        eval();
+                        fall_lock = fall();
+                        if (!fall_lock) {
+                            current_peni = spawnNext();
+                            if (player == Player.CPU) {
+                                switch (Random.Range(0, 4)) {
+                                    case 0: /* Do nothing */ break;
+                                    case 1: StartCoroutine(move_x(-1f)); break;
+                                    case 2: StartCoroutine(move_x(1f));  break;
+                                    case 3: StartCoroutine(move_x(2f));  break;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (Random.Range(0, 400) == 0) {  // 1/400f
+                        fall_bottom = true;
                     }
                 }
             }
@@ -124,9 +196,16 @@ public class PlayManager : MonoBehaviour
                 fall_lock = fall();
                 if (!fall_lock) {
                     current_peni = spawnNext();
+                    if (player == Player.CPU) {
+                        switch (Random.Range(0, 4)) {
+                            case 0: /* Do nothing */ break;
+                            case 1: StartCoroutine(move_x(-1f)); break;
+                            case 2: StartCoroutine(move_x(1f));  break;
+                            case 3: StartCoroutine(move_x(2f));  break;
+                        }
+                    }
                 }
             }
-
         }
     }
 
@@ -217,8 +296,10 @@ public class PlayManager : MonoBehaviour
     }
 
     /// 評価
-    /// "ぺに"を削除できるなら削除し, 整地する
+    /// "ぺに"を削除できるなら削除
+    /// ゲームオーバー判定
     void eval() {
+        // チェック用配列の初期化
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 checked_field[y, x] = false;
@@ -234,6 +315,12 @@ public class PlayManager : MonoBehaviour
                 }
             }
         }
+
+        // Check GameOver
+        if (field[(int)out_pos.y, (int)out_pos.x].kind != BlockKind.NONE) {
+            fall_lock = true;
+            Debug.Log("GameOver");
+        }
     }
 
     /// ぺにをfieldに固定
@@ -244,12 +331,6 @@ public class PlayManager : MonoBehaviour
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
-
-        // Check GameOver
-        if (current_x == out_pos.x && y == out_pos.y) {
-            fall_lock = true;
-            Debug.Log("GameOver");
-        }
     }
 
     /// 落下可能か否か
@@ -289,6 +370,24 @@ public class PlayManager : MonoBehaviour
         key_lock = false;
     }
 
+    /// 一番下まで落下させる
+    //IEnumerator fall_bottom() {
+    //    float height = 0.0f;
+    //    while (can_fall(height)) {
+    //        height += 1.0f;
+    //    }
+    //        height += -2.0f;
+
+    //    for (int _i = 0; _i < 5 * (int)height; ++_i) {
+    //        Vector3 pos = current_peni.obj.transform.position;
+    //        pos.y += -0.2f;
+    //        current_peni.obj.transform.position = pos;
+    //        yield return null;
+    //    }
+    //    current_y = (int)height;
+    //    key_lock = false;
+    //}
+
     /// Nextぺにを生成
     Peni spawnNext() {
         // Random index
@@ -309,6 +408,7 @@ public class PlayManager : MonoBehaviour
 
         current_x = 2;
         current_y = 0;
+        fall_bottom = false;
 
         return new Peni(kind, obj);
     }
