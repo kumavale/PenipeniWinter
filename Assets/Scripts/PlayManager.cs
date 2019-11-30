@@ -67,6 +67,17 @@ public class PlayManager : MonoBehaviour
         // Initialized field
         field = new Peni[FIELD_HEIGHT, FIELD_WIDTH];
         checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
+
+        init();
+    }
+
+    public void init() {
+        key_lock    = false;
+        fall_lock   = false;
+        fall_end    = true;
+        fall_bottom = false;
+
+        // Initialized field
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 field[y, x] = new Peni(BlockKind.NONE, null);
