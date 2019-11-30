@@ -97,9 +97,9 @@ public class PlayManager : MonoBehaviour
                     if (player == Player.CPU) {
                         switch (Random.Range(0, 4)) {
                             case 0: /* Do nothing */ break;
-                            case 1: StartCoroutine(move_x(-1f)); break;
-                            case 2: StartCoroutine(move_x(1f));  break;
-                            case 3: StartCoroutine(move_x(2f));  break;
+                            case 1: StartCoroutine(move_x(-1)); break;
+                            case 2: StartCoroutine(move_x(1));  break;
+                            case 3: StartCoroutine(move_x(2));  break;
                         }
                     }
                 }
@@ -110,13 +110,13 @@ public class PlayManager : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.A)) {
                     if (!key_lock) {
                         key_lock = true;
-                        StartCoroutine(move_x(-1f));
+                        StartCoroutine(move_x(-1));
                     }
                 // D key
                 } else if (Input.GetKeyDown(KeyCode.D)) {
                     if (!key_lock) {
                         key_lock = true;
-                        StartCoroutine(move_x(1f));
+                        StartCoroutine(move_x(1));
                     }
                 // S key
                 } else if (Input.GetKey(KeyCode.S)) {
@@ -137,13 +137,13 @@ public class PlayManager : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.LeftArrow)) {
                     if (!key_lock) {
                         key_lock = true;
-                        StartCoroutine(move_x(-1f));
+                        StartCoroutine(move_x(-1));
                     }
                 // RightArrow key
                 } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
                     if (!key_lock) {
                         key_lock = true;
-                        StartCoroutine(move_x(1f));
+                        StartCoroutine(move_x(1));
                     }
                 // DownArrow key
                 } else if (Input.GetKey(KeyCode.DownArrow)) {
@@ -172,15 +172,15 @@ public class PlayManager : MonoBehaviour
                             if (player == Player.CPU) {
                                 switch (Random.Range(0, 4)) {
                                     case 0: /* Do nothing */ break;
-                                    case 1: StartCoroutine(move_x(-1f)); break;
-                                    case 2: StartCoroutine(move_x(1f));  break;
-                                    case 3: StartCoroutine(move_x(2f));  break;
+                                    case 1: StartCoroutine(move_x(-1)); break;
+                                    case 2: StartCoroutine(move_x(1));  break;
+                                    case 3: StartCoroutine(move_x(2));  break;
                                 }
                             }
                         }
                     }
                 } else {
-                    if (Random.Range(0, 400) == 0) {  // 1/400f
+                    if (Random.Range(0, 100) == 0) {  // 1/400f
                         fall_bottom = true;
                     }
                 }
@@ -199,9 +199,9 @@ public class PlayManager : MonoBehaviour
                     if (player == Player.CPU) {
                         switch (Random.Range(0, 4)) {
                             case 0: /* Do nothing */ break;
-                            case 1: StartCoroutine(move_x(-1f)); break;
-                            case 2: StartCoroutine(move_x(1f));  break;
-                            case 3: StartCoroutine(move_x(2f));  break;
+                            case 1: StartCoroutine(move_x(-1)); break;
+                            case 2: StartCoroutine(move_x(1));  break;
+                            case 3: StartCoroutine(move_x(2));  break;
                         }
                     }
                 }
@@ -318,8 +318,9 @@ public class PlayManager : MonoBehaviour
 
         // Check GameOver
         if (field[(int)out_pos.y, (int)out_pos.x].kind != BlockKind.NONE) {
-            fall_lock = true;
-            Debug.Log("GameOver");
+            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+            gm.GameOver(this.gameObject);
         }
     }
 
@@ -339,20 +340,26 @@ public class PlayManager : MonoBehaviour
         return field[y2+1, current_x].kind == BlockKind.NONE;
     }
 
-    /// x軸方向に移動可能か否か
-    IEnumerator move_x(float distance) {
-        int x = distance <= 0.0f ? -1 : 1;
+    /// x軸方向に移動可能ならする
+    IEnumerator move_x(int distance) {
         const int speed = 5;
 
-        if (field[current_y, current_x + x].kind == BlockKind.NONE) {
-            for (int _i = 0; _i < speed; ++_i) {
-                Vector3 pos = current_peni.obj.transform.position;
-                pos.x += distance / speed;
-                current_peni.obj.transform.position = pos;
-                yield return null;
-            }
+        int dir = distance < 0 ? -1 : 1;
 
-            current_x += x;
+        if (distance != 0) {
+            for (int _x = 1; _x <= Mathf.Abs(distance); ++_x) {
+                if (field[current_y, current_x + dir].kind == BlockKind.NONE) {
+                    current_x += dir;
+                    for (int _i = 0; _i < speed; ++_i) {
+                        Vector3 pos = current_peni.obj.transform.position;
+                        pos.x += (float)dir / speed;
+                        current_peni.obj.transform.position = pos;
+                        yield return null;
+                    }
+                } else {
+                    break;
+                }
+            }
         }
 
         key_lock = false;
@@ -369,24 +376,6 @@ public class PlayManager : MonoBehaviour
         current_y = y+1;
         key_lock = false;
     }
-
-    /// 一番下まで落下させる
-    //IEnumerator fall_bottom() {
-    //    float height = 0.0f;
-    //    while (can_fall(height)) {
-    //        height += 1.0f;
-    //    }
-    //        height += -2.0f;
-
-    //    for (int _i = 0; _i < 5 * (int)height; ++_i) {
-    //        Vector3 pos = current_peni.obj.transform.position;
-    //        pos.y += -0.2f;
-    //        current_peni.obj.transform.position = pos;
-    //        yield return null;
-    //    }
-    //    current_y = (int)height;
-    //    key_lock = false;
-    //}
 
     /// Nextぺにを生成
     Peni spawnNext() {
