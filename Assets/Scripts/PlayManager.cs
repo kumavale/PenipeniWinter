@@ -11,6 +11,8 @@ public class PlayManager : MonoBehaviour
 
     [SerializeField]
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
+    [SerializeField]
+    private GameObject[] disturbs = default;  // disturb_0, disturb_1
 
     [SerializeField]
     private Player player = Player.PLAYER_1;

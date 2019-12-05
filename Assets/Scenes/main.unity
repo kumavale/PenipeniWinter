@@ -234,6 +234,9 @@ MonoBehaviour:
   - {fileID: 1938348704196315604, guid: 8d8b789e8038cd840a109b3cf46a3465, type: 3}
   - {fileID: 573904135708606989, guid: ba6c334adab4b1449b0a373abff984a7, type: 3}
   - {fileID: 5657267242993401634, guid: 17ee9c146cd17e9479ac319466fc3225, type: 3}
+  disturbs:
+  - {fileID: 5541024072075317416, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
+  - {fileID: 2187730117191415718, guid: e5c6be6e0f38900499106c3f4944cf31, type: 3}
   player: 0
 --- !u!4 &142666975
 Transform:
@@ -660,6 +663,9 @@ MonoBehaviour:
   - {fileID: 1938348704196315604, guid: 8d8b789e8038cd840a109b3cf46a3465, type: 3}
   - {fileID: 573904135708606989, guid: ba6c334adab4b1449b0a373abff984a7, type: 3}
   - {fileID: 5657267242993401634, guid: 17ee9c146cd17e9479ac319466fc3225, type: 3}
+  disturbs:
+  - {fileID: 5541024072075317416, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
+  - {fileID: 2187730117191415718, guid: e5c6be6e0f38900499106c3f4944cf31, type: 3}
   player: 2
 --- !u!4 &1439092839
 Transform:
