@@ -69,6 +69,7 @@ public class PlayManager : MonoBehaviour
         // Initialized field
         field = new Peni[FIELD_HEIGHT, FIELD_WIDTH];
         checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
+        can_erase_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
 
         init();
     }
@@ -243,6 +244,59 @@ public class PlayManager : MonoBehaviour
         return cnt;
     }
 
+    /// L字に繋がっているか
+    private bool[,] can_erase_field;  // get_can_erase_field用field
+    void get_can_erase_field(int x, int y, Peni p) {
+        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
+            || field[y, x].kind != p.kind || can_erase_field[y, x])
+        {
+            return;
+        }
+
+        can_erase_field[y, x] = true;
+
+        for (int d = 0; d < 4; ++d) {
+            int x2 = x + (int)directions[d].x;
+            int y2 = y + (int)directions[d].y;
+            get_can_erase_field(x2, y2, p);
+        }
+    }
+    bool is_L_connected(int _x, int _y, Peni p) {
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                can_erase_field[y, x] = false;
+            }
+        }
+
+        get_can_erase_field(_x, _y, p);
+
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                if (can_erase_field[y, x]) {
+                    int up_x    = x + (int)directions[0].x;
+                    int up_y    = y + (int)directions[0].y;
+                    int left_x  = x + (int)directions[1].x;
+                    int left_y  = y + (int)directions[1].y;
+                    int down_x  = x + (int)directions[2].x;
+                    int down_y  = y + (int)directions[2].y;
+                    int right_x = x + (int)directions[3].x;
+                    int right_y = y + (int)directions[3].y;
+
+                    if (can_erase_field[up_y, up_x] && can_erase_field[right_y, right_x])
+                        return true;
+                    if (can_erase_field[right_y, right_x] && can_erase_field[down_y, down_x])
+                        return true;
+                    if (can_erase_field[down_y, down_x] && can_erase_field[left_y, left_x])
+                        return true;
+                    if (can_erase_field[left_y, left_x] && can_erase_field[up_y, up_x])
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /// 繋がっている"ぺに"を削除する
     void erase_peni(int x, int y, Peni p) {
         if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
@@ -323,6 +377,9 @@ public class PlayManager : MonoBehaviour
             for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 if (field[y, x].kind != BlockKind.NONE) {
                     if (get_peni_connected_count(x, y, field[y, x].kind, 0) >= 3) {
+                        if (is_L_connected(x, y, field[y, x])) {
+                            // Send disturb
+                        }
                         erase_peni(x, y, field[y, x]);
                     }
                 }
