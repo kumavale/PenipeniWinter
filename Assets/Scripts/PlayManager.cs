@@ -7,7 +7,7 @@ public class PlayManager : MonoBehaviour
     [SerializeField]
     private int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
     [SerializeField]
-    private int FIELD_HEIGHT = 9 + 1;  // 9 + 壁
+    private int FIELD_HEIGHT = 1 + 9 + 1;  // 番兵 + 9 + 壁
 
     [SerializeField]
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
@@ -61,11 +61,10 @@ public class PlayManager : MonoBehaviour
         new Vector2( 1,  0),  // Right
     };
 
-    Vector2 out_pos = new Vector2(2, 2);
+    Vector2 out_pos = new Vector2(2, 1);  // x, y
 
     /// Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
         // Initialized field
         field = new Peni[FIELD_HEIGHT, FIELD_WIDTH];
         checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
@@ -100,8 +99,7 @@ public class PlayManager : MonoBehaviour
     }
 
     /// Update is called once per frame
-    void Update()
-    {
+    void Update() {
         if (fall_lock) {
             if (fall_end) {
                 eval();
@@ -174,10 +172,12 @@ public class PlayManager : MonoBehaviour
                     }
                 }
             } else {
+                // CPU
                 if (fall_bottom) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
                     } else {
+                        key_lock = true;
                         fix_peni();
                         eval();
                         fall_lock = fall();
@@ -246,6 +246,9 @@ public class PlayManager : MonoBehaviour
 
     /// L字に繋がっているか
     private bool[,] can_erase_field;  // get_can_erase_field用field
+
+    public Vector2 Out_pos { get => out_pos; set => out_pos = value; }
+
     void get_can_erase_field(int x, int y, Peni p) {
         if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
             || field[y, x].kind != p.kind || can_erase_field[y, x])
@@ -325,7 +328,7 @@ public class PlayManager : MonoBehaviour
 
         do {
             falled = false;
-            for (int y = FIELD_HEIGHT-2; y > 0; --y) {
+            for (int y = FIELD_HEIGHT-2; 0 < y; --y) {
                 for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                     if (field[y, x].kind == BlockKind.NONE
                         && field[y-1, x].kind != BlockKind.NONE)
@@ -387,7 +390,7 @@ public class PlayManager : MonoBehaviour
         }
 
         // Check GameOver
-        if (field[(int)out_pos.y, (int)out_pos.x].kind != BlockKind.NONE) {
+        if (field[(int)Out_pos.y, (int)Out_pos.x].kind != BlockKind.NONE) {
             GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
 
             gm.GameOver(this.gameObject);
@@ -396,9 +399,14 @@ public class PlayManager : MonoBehaviour
 
     /// ぺにをfieldに固定
     void fix_peni() {
-        int y = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y)) + 1;
+        int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 1;
         Vector3 pos = current_peni.obj.transform.position;
         pos.y = Mathf.Floor(current_peni.obj.transform.position.y);
+        if (player == Player.PLAYER_1) {
+            pos.x = -5.5f + current_x;
+        } else {
+            pos.x = 3.5f + current_x;
+        }
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
@@ -406,19 +414,19 @@ public class PlayManager : MonoBehaviour
 
     /// 落下可能か否か
     bool can_fall(float y) {
-        int y2 = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y + y));
-        return field[y2+1, current_x].kind == BlockKind.NONE;
+        int y2 = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + y));
+        return (y2 < FIELD_HEIGHT-1) && field[y2+1, current_x].kind == BlockKind.NONE;
     }
 
     /// x軸方向に移動可能ならする
     IEnumerator move_x(int distance) {
-        const int speed = 5;
+        const int speed = 4;
 
         int dir = distance < 0 ? -1 : 1;
 
         if (distance != 0) {
             for (int _x = 1; _x <= Mathf.Abs(distance); ++_x) {
-                if (field[current_y, current_x + dir].kind == BlockKind.NONE) {
+                if (field[current_y+1, current_x + dir].kind == BlockKind.NONE) {
                     current_x += dir;
                     for (int _i = 0; _i < speed; ++_i) {
                         Vector3 pos = current_peni.obj.transform.position;
@@ -437,13 +445,13 @@ public class PlayManager : MonoBehaviour
 
     /// y軸方向に移動可能か否か
     void move_y(float distance) {
-        int y = (int)Mathf.Abs(Mathf.Floor(current_peni.obj.transform.position.y + distance));
+        int y = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + distance)) - 1;
 
         Vector3 pos = current_peni.obj.transform.position;
         pos.y += distance;
         current_peni.obj.transform.position = pos;
 
-        current_y = y+1;
+        current_y = y + 1;
         key_lock = false;
     }
 
