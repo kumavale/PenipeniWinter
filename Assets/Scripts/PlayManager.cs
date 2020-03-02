@@ -1,13 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayManager : MonoBehaviour
 {
+    private Chain chain;
+    private int chain_count = 0;
+
     [SerializeField]
-    private int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
+    private const int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
     [SerializeField]
-    private int FIELD_HEIGHT = 1 + 9 + 1;  // 番兵 + 9 + 壁
+    private const int FIELD_HEIGHT = 1 + 9 + 1;  // 番兵 + 9 + 壁
 
     [SerializeField]
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
@@ -16,6 +20,11 @@ public class PlayManager : MonoBehaviour
 
     [SerializeField]
     private Player player = Player.PLAYER_1;
+
+    [SerializeField]
+    private GameObject score_object = default;
+    private Text score_text = default;
+    private int score = 0;
 
     private Peni[,] field;  // FIELD_HEIGHT x FIELD_WIDTH
 
@@ -70,6 +79,9 @@ public class PlayManager : MonoBehaviour
         checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
         can_erase_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
 
+        chain = this.GetComponent<Chain>();
+        score_text = score_object.GetComponent<Text>();
+
         init();
     }
 
@@ -95,6 +107,10 @@ public class PlayManager : MonoBehaviour
             field[FIELD_HEIGHT-1, x].kind = BlockKind.WALL;
         }
 
+        // Score
+        score = 0;
+        score_text.text = "0";
+
         current_peni = spawnNext();
     }
 
@@ -102,6 +118,7 @@ public class PlayManager : MonoBehaviour
     void Update() {
         if (fall_lock) {
             if (fall_end) {
+                ++chain_count;
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
@@ -134,8 +151,10 @@ public class PlayManager : MonoBehaviour
                 } else if (Input.GetKey(KeyCode.S)) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
+                        score_add(1);
                     } else if (!key_lock) {
                         key_lock = true;
+                        chain_count = 0;
                         fix_peni();
                         eval();
                         fall_lock = fall();
@@ -161,8 +180,10 @@ public class PlayManager : MonoBehaviour
                 } else if (Input.GetKey(KeyCode.DownArrow)) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
+                        score_add(1);
                     } else if (!key_lock) {
                         key_lock = true;
+                        chain_count = 0;
                         fix_peni();
                         eval();
                         fall_lock = fall();
@@ -176,8 +197,10 @@ public class PlayManager : MonoBehaviour
                 if (fall_bottom) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
+                        score_add(1);
                     } else {
                         key_lock = true;
+                        chain_count = 0;
                         fix_peni();
                         eval();
                         fall_lock = fall();
@@ -205,6 +228,7 @@ public class PlayManager : MonoBehaviour
                 move_y(fall_spead);
             } else if (!key_lock) {
                 key_lock = true;
+                chain_count = 0;
                 fix_peni();
                 eval();
                 fall_lock = fall();
@@ -375,19 +399,29 @@ public class PlayManager : MonoBehaviour
                 checked_field[y, x] = false;
             }
         }
+        int peni_count = 0;
+        int link_count = 0;
 
         for (int y = 0; y < FIELD_HEIGHT-1; ++y) {
             for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 if (field[y, x].kind != BlockKind.NONE) {
-                    if (get_peni_connected_count(x, y, field[y, x].kind, 0) >= 3) {
+                    int peni_connected_count = get_peni_connected_count(x, y, field[y, x].kind, 0);
+                    if (3 <= peni_connected_count) {
                         if (is_L_connected(x, y, field[y, x])) {
                             // Send disturb
+                        }
+                        peni_count += peni_connected_count;
+                        if (link_count < peni_connected_count) {
+                            link_count = peni_connected_count;
                         }
                         erase_peni(x, y, field[y, x]);
                     }
                 }
             }
         }
+
+        // Score calculate
+        score_add(score_calc(peni_count, chain_count, link_count));
 
         // Check GameOver
         if (field[(int)Out_pos.y, (int)Out_pos.x].kind != BlockKind.NONE) {
@@ -478,5 +512,23 @@ public class PlayManager : MonoBehaviour
         fall_bottom = false;
 
         return new Peni(kind, obj);
+    }
+
+    // スコアを加算し、描画する
+    void score_add(int s) {
+        this.score += s;
+        score_text.text = this.score.ToString();
+    }
+
+    // 得点計算
+    // 消したぺにの個数 * (連鎖ボーナス + 連結ボーナス) * 10
+    int score_calc(int _peni_count, int _chain_count, int _link_count) {
+        _link_count -= 3;
+        if (_link_count < 0) {
+            _link_count = 0;
+        } else if(7 < _link_count) {
+            _link_count = 7;
+        }
+        return _peni_count * (chain.Chain_bonus[_chain_count] + chain.Link_bonus[_link_count]) * 10;
     }
 }
