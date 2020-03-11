@@ -78,7 +78,8 @@ public class PlayManager : MonoBehaviour
 
     Vector2 out_pos = new Vector2(2, 1);  // x, y
 
-    PeniRandom peni_random = default;
+    public int seed = 0;
+    private PeniRandom peni_random;
 
     /// Start is called before the first frame update
     void Start() {
@@ -91,13 +92,14 @@ public class PlayManager : MonoBehaviour
         score_text = score_object.GetComponent<Text>();
 
         // 乱数の初期化
-        peni_random = new PeniRandom(42);
+        seed = (int)System.DateTime.Now.Second;
+        peni_random = new PeniRandom(seed);
 
         init();
     }
 
     public void init() {
-        peni_random.set_seed(42);
+        peni_random.set_seed(seed);
 
         key_lock    = false;
         fall_lock   = false;

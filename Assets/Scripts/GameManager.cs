@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System;
+
 public class GameManager : MonoBehaviour
 {
     [SerializeField]
@@ -11,13 +13,24 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     GameObject canvas_gameover = default;
 
+    private static DateTime unix_epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+
     // Start is called before the first frame update
-    //void Start() {
-    //}
+    void Start() {
+        // init seed
+        //gen_seed();
+    }
 
     // Update is called once per frame
     //void Update() {
     //}
+
+    // Generate seed
+    public void gen_seed() {
+        int seed = (int)(DateTime.Now - unix_epoch).TotalSeconds;
+        p1.GetComponent<PlayManager>().seed = seed;
+        p2.GetComponent<PlayManager>().seed = seed;
+    }
 
     public void GameOver(GameObject player) {
         Debug.Log("GameOver: " + player);
@@ -26,6 +39,9 @@ public class GameManager : MonoBehaviour
 
         // Enable gameover canvas
         canvas_gameover.SetActive(true);
+
+        // Set another seed
+        gen_seed();
     }
 
     public void Press_button_retry() {

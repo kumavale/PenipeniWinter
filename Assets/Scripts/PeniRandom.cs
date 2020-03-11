@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PeniRandom : MonoBehaviour {
+public class PeniRandom {
 
     private Random.State state;
 
-    public PeniRandom(int seed = 42) {
+    public PeniRandom() : this(42){}
+    public PeniRandom(int seed) {
         set_seed(seed);
     }
 
