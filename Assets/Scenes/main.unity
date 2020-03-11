@@ -285,6 +285,7 @@ GameObject:
   - component: {fileID: 142666975}
   - component: {fileID: 142666974}
   - component: {fileID: 142666976}
+  - component: {fileID: 142666977}
   m_Layer: 0
   m_Name: 1P
   m_TagString: Untagged
@@ -304,13 +305,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e654fa602b34be4cae1bde03b666fc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  opponent: {fileID: 1439092837}
   penis:
   - {fileID: 1938348704196315604, guid: 8d8b789e8038cd840a109b3cf46a3465, type: 3}
   - {fileID: 573904135708606989, guid: ba6c334adab4b1449b0a373abff984a7, type: 3}
   - {fileID: 5657267242993401634, guid: 17ee9c146cd17e9479ac319466fc3225, type: 3}
   disturbs:
-  - {fileID: 5541024072075317416, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
-  - {fileID: 2187730117191415718, guid: e5c6be6e0f38900499106c3f4944cf31, type: 3}
+  - {fileID: 2892236041597481353, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
+  - {fileID: 4116993006448499085, guid: e108e3a5e7382814a8b61effb5bd8762, type: 3}
   player: 0
   score_object: {fileID: 2005173085}
 --- !u!4 &142666975
@@ -337,6 +339,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cfd3e612cd9bcb9448d3ffd2b271293f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &142666977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142666973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db40068561065a443a4b13070856221b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &341148079
@@ -814,6 +828,7 @@ GameObject:
   - component: {fileID: 1439092839}
   - component: {fileID: 1439092838}
   - component: {fileID: 1439092840}
+  - component: {fileID: 1439092841}
   m_Layer: 0
   m_Name: 2P
   m_TagString: Untagged
@@ -833,13 +848,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e654fa602b34be4cae1bde03b666fc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  opponent: {fileID: 142666973}
   penis:
   - {fileID: 1938348704196315604, guid: 8d8b789e8038cd840a109b3cf46a3465, type: 3}
   - {fileID: 573904135708606989, guid: ba6c334adab4b1449b0a373abff984a7, type: 3}
   - {fileID: 5657267242993401634, guid: 17ee9c146cd17e9479ac319466fc3225, type: 3}
   disturbs:
-  - {fileID: 5541024072075317416, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
-  - {fileID: 2187730117191415718, guid: e5c6be6e0f38900499106c3f4944cf31, type: 3}
+  - {fileID: 2892236041597481353, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
+  - {fileID: 4116993006448499085, guid: e108e3a5e7382814a8b61effb5bd8762, type: 3}
   player: 2
   score_object: {fileID: 1964651730}
 --- !u!4 &1439092839
@@ -866,6 +882,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cfd3e612cd9bcb9448d3ffd2b271293f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1439092841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1439092837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db40068561065a443a4b13070856221b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1661492846

@@ -9,6 +9,9 @@ public class PlayManager : MonoBehaviour
     private int chain_count = 0;
 
     [SerializeField]
+    private GameObject opponent = default;  // 対戦相手
+
+    [SerializeField]
     private const int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
     [SerializeField]
     private const int FIELD_HEIGHT = 1 + 9 + 1;  // 番兵 + 9 + 壁
@@ -17,6 +20,7 @@ public class PlayManager : MonoBehaviour
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
     [SerializeField]
     private GameObject[] disturbs = default;  // disturb_0, disturb_1
+    private Queue<int> disturb_queue = new Queue<int>();
 
     [SerializeField]
     private Player player = Player.PLAYER_1;
@@ -36,9 +40,11 @@ public class PlayManager : MonoBehaviour
 
     public enum BlockKind {
         NONE,
-        PENI_0,  // purple
-        PENI_1,  // green
-        PENI_2,  // blue
+        PENI_0,     // purple
+        PENI_1,     // green
+        PENI_2,     // blue
+        DISTURB_0,  // L
+        DISTURB_1,  // _
         WALL,
     }
 
@@ -72,6 +78,8 @@ public class PlayManager : MonoBehaviour
 
     Vector2 out_pos = new Vector2(2, 1);  // x, y
 
+    PeniRandom peni_random = default;
+
     /// Start is called before the first frame update
     void Start() {
         // Initialized field
@@ -82,10 +90,15 @@ public class PlayManager : MonoBehaviour
         chain = this.GetComponent<Chain>();
         score_text = score_object.GetComponent<Text>();
 
+        // 乱数の初期化
+        peni_random = new PeniRandom(42);
+
         init();
     }
 
     public void init() {
+        peni_random.set_seed(42);
+
         key_lock    = false;
         fall_lock   = false;
         fall_end    = true;
@@ -363,14 +376,16 @@ public class PlayManager : MonoBehaviour
                         fall_end = false;
 
                         field[y, x] = field[y-1, x];
-                        StartCoroutine(smooth_fall(field[y, x], -1f));
+                        if (field[y, x].obj != null) {
+                            StartCoroutine(smooth_fall(field[y, x], -1f));
+                        }
 
                         field[y-1, x].kind = BlockKind.NONE;
                         field[y-1, x].obj  = null;
                     }
                 }
             }
-        } while(falled);
+        } while (falled);
 
         return ret;
     }
@@ -409,6 +424,16 @@ public class PlayManager : MonoBehaviour
                     if (3 <= peni_connected_count) {
                         if (is_L_connected(x, y, field[y, x])) {
                             // Send disturb
+                            //field[0, 1].kind = BlockKind.DISTURB_0;
+                            //field[1, 1].kind = BlockKind.DISTURB_0;
+                            //field[1, 2].kind = BlockKind.DISTURB_0;
+                            //Vector3 pos = transform.position;
+                            //pos.x += 1.0f;
+                            //GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
+                            //field[0, 1].obj = obj;
+                            ////field[1, 1].obj = obj;
+                            ////field[1, 2].obj = obj;
+                            //fall();
                         }
                         peni_count += peni_connected_count;
                         if (link_count < peni_connected_count) {
@@ -492,7 +517,7 @@ public class PlayManager : MonoBehaviour
     /// Nextぺにを生成
     Peni spawnNext() {
         // Random index
-        int i = Random.Range(0, penis.Length);
+        int i = peni_random.Range(0, penis.Length);
 
         // Spawn peni at current position
         Vector3 pos = transform.position;
