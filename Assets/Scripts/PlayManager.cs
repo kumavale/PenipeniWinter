@@ -208,6 +208,7 @@ public class PlayManager : MonoBehaviour
                     } else if (!key_lock) {
                         key_lock = true;
                         chain_count = 0;
+                        disturb_queue_for_send.Clear();
                         fix_peni();
                         eval();
                         fall_lock = fall();
@@ -333,9 +334,11 @@ public class PlayManager : MonoBehaviour
 
         return false;
     }
-    bool is_4_horizontal_connected(int _x, int _y, Peni p) {
-        Debug.Log("4");
-        return false;
+    // 水平方向に4つ繋がっているか
+    bool is_4_horizontal_connected(int _y) {
+        return (field[_y, 1].kind == field[_y, 2].kind)
+            && (field[_y, 1].kind == field[_y, 3].kind)
+            && (field[_y, 1].kind == field[_y, 4].kind);
     }
 
     /// 繋がっている"ぺに"を削除する
@@ -368,8 +371,11 @@ public class PlayManager : MonoBehaviour
             falled = false;
             for (int y = FIELD_HEIGHT-2; 0 < y; --y) {
                 for (int x = 1; x < FIELD_WIDTH-1; ++x) {
+                    // ぺにの落下
                     if (field[y, x].kind == BlockKind.NONE
-                        && field[y-1, x].kind != BlockKind.NONE)
+                        && (field[y-1, x].kind == BlockKind.PENI_0
+                         || field[y-1, x].kind == BlockKind.PENI_1
+                         || field[y-1, x].kind == BlockKind.PENI_2))
                     {
                         ret = true;
                         falled = true;
@@ -377,12 +383,36 @@ public class PlayManager : MonoBehaviour
                         fall_end = false;
 
                         field[y, x] = field[y-1, x];
-                        if (field[y, x].obj != null) {
-                            StartCoroutine(smooth_fall(field[y, x], -1f));
-                        }
+                        StartCoroutine(smooth_fall(field[y, x], -1f));
 
                         field[y-1, x].kind = BlockKind.NONE;
                         field[y-1, x].obj  = null;
+
+                    // お邪魔Lの落下
+                    //} else if (field[y, x].kind == ) {
+
+                    // お邪魔Fourの落下
+                    } else if (x == 1 && field[y-1, x].kind == BlockKind.DISTURB_1
+                    && field[y, 1].kind == BlockKind.NONE
+                    && field[y, 2].kind == BlockKind.NONE
+                    && field[y, 3].kind == BlockKind.NONE
+                    && field[y, 4].kind == BlockKind.NONE) {
+                        ret = true;
+                        falled = true;
+                        fall_lock = true;
+                        fall_end = false;
+
+                        field[y, 1] = field[y-1, 1];
+                        field[y, 2] = field[y-1, 2];
+                        field[y, 3] = field[y-1, 3];
+                        field[y, 4] = field[y-1, 4];
+                        StartCoroutine(smooth_fall(field[y, 1], -1f));
+
+                        field[y-1, 1].kind = BlockKind.NONE;
+                        field[y-1, 2].kind = BlockKind.NONE;
+                        field[y-1, 3].kind = BlockKind.NONE;
+                        field[y-1, 4].kind = BlockKind.NONE;
+                        field[y-1, 1].obj  = null;
                     }
                 }
             }
@@ -421,12 +451,15 @@ public class PlayManager : MonoBehaviour
         for (int y = 0; y < FIELD_HEIGHT-1; ++y) {
             for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 if (field[y, x].kind != BlockKind.NONE) {
+                    if (field[y, x].kind == BlockKind.DISTURB_0 || field[y, x].kind == BlockKind.DISTURB_1) {
+                        continue;
+                    }
                     int peni_connected_count = get_peni_connected_count(x, y, field[y, x].kind, 0);
                     if (3 <= peni_connected_count) {
                         if (is_L_connected(x, y, field[y, x])) {
                             // Send DisturbKind.L
                             disturb_queue_for_send.Enqueue(DisturbKind.L);
-                        } else if (is_4_horizontal_connected(x, y, field[y, x])) {
+                        } else if (is_4_horizontal_connected(y)) {
                             // Send DisturbKind.Four
                             disturb_queue_for_send.Enqueue(DisturbKind.Four);
                         }
@@ -464,10 +497,6 @@ public class PlayManager : MonoBehaviour
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
-
-        // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
-        descend_disturb();
-        //show_field(Player.PLAYER_1);
     }
 
     /// 落下可能か否か
@@ -558,6 +587,9 @@ public class PlayManager : MonoBehaviour
 
     // fall()で全ての落下が終わった後の処理
     void after_falling() {
+        // TODO: 相殺の計算
+        // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
+        descend_disturb();
         // 相手にお邪魔を送る
         opponent_pm.push_disturbs(disturb_queue_for_send);
 
@@ -575,8 +607,32 @@ public class PlayManager : MonoBehaviour
     // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
     void descend_disturb() {
         if (disturb_queue.Count != 0) {
-            //Debug.Log("descend_disturb: TODO");
+            foreach (DisturbKind dk in disturb_queue) {
+                if (dk == DisturbKind.L) {
+                    //field[0, 1].kind = BlockKind.DISTURB_0;
+                    //field[1, 1].kind = BlockKind.DISTURB_0;
+                    //field[1, 2].kind = BlockKind.DISTURB_0;
+                    //Vector3 pos = transform.position;
+                    //pos.x += 1.5f;
+                    //GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
+                    //field[1, 1].obj = obj;
+                } else {
+                    field[0, 1].kind = BlockKind.DISTURB_1;
+                    field[0, 2].kind = BlockKind.DISTURB_1;
+                    field[0, 3].kind = BlockKind.DISTURB_1;
+                    field[0, 4].kind = BlockKind.DISTURB_1;
+                    Vector3 pos = transform.position;
+                    pos.x += 1.5f;
+                    GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
+                    field[0, 1].obj = obj;
+                    //UnityEditor.EditorApplication.isPaused = true;
+                    show_field(Player.CPU);
+                }
+                fall_lock = fall();
+            }
+
             disturb_queue.Clear();
+            //show_field(Player.CPU);
         }
     }
 
