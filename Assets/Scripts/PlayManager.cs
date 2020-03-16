@@ -389,7 +389,23 @@ public class PlayManager : MonoBehaviour
                         field[y-1, x].obj  = null;
 
                     // お邪魔Lの落下
-                    //} else if (field[y, x].kind == ) {
+                    } else if (field[y-1, x].kind == BlockKind.DISTURB_0
+                    && field[y-1, x].obj != null
+                    && field[y, x].kind   == BlockKind.NONE
+                    && field[y, x+1].kind == BlockKind.NONE) {
+                        ret = true;
+                        falled = true;
+                        fall_lock = true;
+                        fall_end = false;
+
+                        field[y, x]   = field[y-1, x];
+                        field[y, x+1] = field[y-1, x+1];
+                        field[y-1, x] = field[y-2, x];
+                        StartCoroutine(smooth_fall(field[y, x], -1f));
+
+                        field[y-2, x].kind   = BlockKind.NONE;
+                        field[y-1, x+1].kind = BlockKind.NONE;
+                        field[y-1, x].obj    = null;
 
                     // お邪魔Fourの落下
                     } else if (x == 1 && field[y-1, x].kind == BlockKind.DISTURB_1
@@ -609,13 +625,14 @@ public class PlayManager : MonoBehaviour
         if (disturb_queue.Count != 0) {
             foreach (DisturbKind dk in disturb_queue) {
                 if (dk == DisturbKind.L) {
-                    //field[0, 1].kind = BlockKind.DISTURB_0;
-                    //field[1, 1].kind = BlockKind.DISTURB_0;
-                    //field[1, 2].kind = BlockKind.DISTURB_0;
-                    //Vector3 pos = transform.position;
-                    //pos.x += 1.5f;
-                    //GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
-                    //field[1, 1].obj = obj;
+                    field[0, 1].kind = BlockKind.DISTURB_0;
+                    field[1, 1].kind = BlockKind.DISTURB_0;
+                    field[1, 2].kind = BlockKind.DISTURB_0;
+                    Vector3 pos = transform.position;
+                    pos.x += 0.5f;
+                    pos.y -= 0.5f;
+                    GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
+                    field[1, 1].obj = obj;
                 } else {
                     field[0, 1].kind = BlockKind.DISTURB_1;
                     field[0, 2].kind = BlockKind.DISTURB_1;
@@ -625,8 +642,6 @@ public class PlayManager : MonoBehaviour
                     pos.x += 1.5f;
                     GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
                     field[0, 1].obj = obj;
-                    //UnityEditor.EditorApplication.isPaused = true;
-                    show_field(Player.CPU);
                 }
                 fall_lock = fall();
             }
