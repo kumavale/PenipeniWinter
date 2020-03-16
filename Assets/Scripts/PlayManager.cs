@@ -603,7 +603,8 @@ public class PlayManager : MonoBehaviour
 
     // fall()で全ての落下が終わった後の処理
     void after_falling() {
-        // TODO: 相殺の計算
+        // 相殺の計算
+        neutralizing();
         // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
         descend_disturb();
         // 相手にお邪魔を送る
@@ -654,6 +655,16 @@ public class PlayManager : MonoBehaviour
 
             disturb_queue.Clear();
             //show_field(Player.CPU);
+        }
+    }
+
+    // 相殺の計算
+    // お邪魔の種類は関係なく, 数で中和する
+    void neutralizing() {
+        for (int _q = disturb_queue_for_send.Count; 0 < _q; --_q) {
+            if (disturb_queue.Count == 0) { return; }
+            disturb_queue.Dequeue();
+            disturb_queue_for_send.Dequeue();
         }
     }
 
