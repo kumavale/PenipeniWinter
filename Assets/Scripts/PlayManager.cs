@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
+
 public class PlayManager : MonoBehaviour
 {
     private Chain chain;
@@ -10,6 +13,7 @@ public class PlayManager : MonoBehaviour
 
     [SerializeField]
     private GameObject opponent = default;  // 対戦相手
+    private PlayManager opponent_pm;
 
     [SerializeField]
     private const int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
@@ -20,7 +24,17 @@ public class PlayManager : MonoBehaviour
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
     [SerializeField]
     private GameObject[] disturbs = default;  // disturb_0, disturb_1
-    private Queue<int> disturb_queue = new Queue<int>();
+    public enum DisturbKind {
+        L,
+        Four,
+    }
+    private Queue<DisturbKind> disturb_queue = new Queue<DisturbKind>();
+    private Queue<DisturbKind> disturb_queue_for_send = new Queue<DisturbKind>();
+    public void push_disturbs(Queue<DisturbKind> q) {
+        foreach (DisturbKind dk in q) {
+            this.disturb_queue.Enqueue(dk);
+        }
+    }
 
     [SerializeField]
     private Player player = Player.PLAYER_1;
@@ -91,6 +105,8 @@ public class PlayManager : MonoBehaviour
         chain = this.GetComponent<Chain>();
         score_text = score_object.GetComponent<Text>();
 
+        opponent_pm = opponent.GetComponent<PlayManager>();
+
         // 乱数の初期化
         seed = (int)System.DateTime.Now.Second;
         peni_random = new PeniRandom(seed);
@@ -137,15 +153,7 @@ public class PlayManager : MonoBehaviour
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
-                    current_peni = spawnNext();
-                    if (player == Player.CPU) {
-                        switch (Random.Range(0, 4)) {
-                            case 0: /* Do nothing */ break;
-                            case 1: StartCoroutine(move_x(-1)); break;
-                            case 2: StartCoroutine(move_x(1));  break;
-                            case 3: StartCoroutine(move_x(2));  break;
-                        }
-                    }
+                    after_falling();
                 }
             }
         } else {
@@ -170,11 +178,12 @@ public class PlayManager : MonoBehaviour
                     } else if (!key_lock) {
                         key_lock = true;
                         chain_count = 0;
+                        disturb_queue_for_send.Clear();
                         fix_peni();
                         eval();
                         fall_lock = fall();
                         if (!fall_lock) {
-                            current_peni = spawnNext();
+                            after_falling();
                         }
                     }
                 }
@@ -203,7 +212,7 @@ public class PlayManager : MonoBehaviour
                         eval();
                         fall_lock = fall();
                         if (!fall_lock) {
-                            current_peni = spawnNext();
+                            after_falling();
                         }
                     }
                 }
@@ -216,19 +225,12 @@ public class PlayManager : MonoBehaviour
                     } else {
                         key_lock = true;
                         chain_count = 0;
+                        disturb_queue_for_send.Clear();
                         fix_peni();
                         eval();
                         fall_lock = fall();
                         if (!fall_lock) {
-                            current_peni = spawnNext();
-                            if (player == Player.CPU) {
-                                switch (Random.Range(0, 4)) {
-                                    case 0: /* Do nothing */ break;
-                                    case 1: StartCoroutine(move_x(-1)); break;
-                                    case 2: StartCoroutine(move_x(1));  break;
-                                    case 3: StartCoroutine(move_x(2));  break;
-                                }
-                            }
+                            after_falling();
                         }
                     }
                 } else {
@@ -244,19 +246,12 @@ public class PlayManager : MonoBehaviour
             } else if (!key_lock) {
                 key_lock = true;
                 chain_count = 0;
+                disturb_queue_for_send.Clear();
                 fix_peni();
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
-                    current_peni = spawnNext();
-                    if (player == Player.CPU) {
-                        switch (Random.Range(0, 4)) {
-                            case 0: /* Do nothing */ break;
-                            case 1: StartCoroutine(move_x(-1)); break;
-                            case 2: StartCoroutine(move_x(1));  break;
-                            case 3: StartCoroutine(move_x(2));  break;
-                        }
-                    }
+                    after_falling();
                 }
             }
         }
@@ -336,6 +331,10 @@ public class PlayManager : MonoBehaviour
             }
         }
 
+        return false;
+    }
+    bool is_4_horizontal_connected(int _x, int _y, Peni p) {
+        Debug.Log("4");
         return false;
     }
 
@@ -425,17 +424,11 @@ public class PlayManager : MonoBehaviour
                     int peni_connected_count = get_peni_connected_count(x, y, field[y, x].kind, 0);
                     if (3 <= peni_connected_count) {
                         if (is_L_connected(x, y, field[y, x])) {
-                            // Send disturb
-                            //field[0, 1].kind = BlockKind.DISTURB_0;
-                            //field[1, 1].kind = BlockKind.DISTURB_0;
-                            //field[1, 2].kind = BlockKind.DISTURB_0;
-                            //Vector3 pos = transform.position;
-                            //pos.x += 1.0f;
-                            //GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
-                            //field[0, 1].obj = obj;
-                            ////field[1, 1].obj = obj;
-                            ////field[1, 2].obj = obj;
-                            //fall();
+                            // Send DisturbKind.L
+                            disturb_queue_for_send.Enqueue(DisturbKind.L);
+                        } else if (is_4_horizontal_connected(x, y, field[y, x])) {
+                            // Send DisturbKind.Four
+                            disturb_queue_for_send.Enqueue(DisturbKind.Four);
                         }
                         peni_count += peni_connected_count;
                         if (link_count < peni_connected_count) {
@@ -471,6 +464,10 @@ public class PlayManager : MonoBehaviour
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
+
+        // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
+        descend_disturb();
+        //show_field(Player.PLAYER_1);
     }
 
     /// 落下可能か否か
@@ -557,5 +554,54 @@ public class PlayManager : MonoBehaviour
             _link_count = 7;
         }
         return _peni_count * (chain.Chain_bonus[_chain_count] + chain.Link_bonus[_link_count]) * 10;
+    }
+
+    // fall()で全ての落下が終わった後の処理
+    void after_falling() {
+        // 相手にお邪魔を送る
+        opponent_pm.push_disturbs(disturb_queue_for_send);
+
+        current_peni = spawnNext();
+        if (player == Player.CPU) {
+            switch (Random.Range(0, 4)) {
+                case 0: /* Do nothing */ break;
+                case 1: StartCoroutine(move_x(-1)); break;
+                case 2: StartCoroutine(move_x(1));  break;
+                case 3: StartCoroutine(move_x(2));  break;
+            }
+        }
+    }
+
+    // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
+    void descend_disturb() {
+        if (disturb_queue.Count != 0) {
+            //Debug.Log("descend_disturb: TODO");
+            disturb_queue.Clear();
+        }
+    }
+
+
+    // デバッグ用関数群
+    [Conditional("UNITY_EDITOR")]
+    public void show_field(Player p) {
+        if (p != player) { return; }
+
+        string _field = null;
+
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                switch (field[y, x].kind) {
+                    case BlockKind.NONE:      _field += "_"; break;
+                    case BlockKind.WALL:      _field += "#"; break;
+                    case BlockKind.DISTURB_0:
+                    case BlockKind.DISTURB_1: _field += "*"; break;
+                    case BlockKind.PENI_0:
+                    case BlockKind.PENI_1:
+                    case BlockKind.PENI_2:    _field += "P"; break;
+                }
+            }
+            _field += "\n";
+        }
+        Debug.Log(_field);
     }
 }
