@@ -625,14 +625,20 @@ public class PlayManager : MonoBehaviour
         if (disturb_queue.Count != 0) {
             foreach (DisturbKind dk in disturb_queue) {
                 if (dk == DisturbKind.L) {
-                    field[0, 1].kind = BlockKind.DISTURB_0;
-                    field[1, 1].kind = BlockKind.DISTURB_0;
-                    field[1, 2].kind = BlockKind.DISTURB_0;
+                    // 1/2の確率で左右に振り分ける
+                    int x = Random.Range(0, 2)==0 ? 1 : 3;
+                    // もしフィールドが上まで埋まっているなら逆側に置く
+                    if (field[1, x].kind != BlockKind.NONE || field[1, x+1].kind != BlockKind.NONE) {
+                        x = x==1 ? 3 : 1;
+                    }
+                    field[0, x].kind   = BlockKind.DISTURB_0;
+                    field[1, x].kind   = BlockKind.DISTURB_0;
+                    field[1, x+1].kind = BlockKind.DISTURB_0;
                     Vector3 pos = transform.position;
-                    pos.x += 0.5f;
+                    pos.x += x - 0.5f;
                     pos.y -= 0.5f;
                     GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
-                    field[1, 1].obj = obj;
+                    field[1, x].obj = obj;
                 } else {
                     field[0, 1].kind = BlockKind.DISTURB_1;
                     field[0, 2].kind = BlockKind.DISTURB_1;
