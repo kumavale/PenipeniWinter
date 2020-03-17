@@ -346,6 +346,44 @@ public class PlayManager : MonoBehaviour
         if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
             || field[y, x].kind != p.kind)
         {
+            // お邪魔が隣接していたら, お邪魔も消す
+            // DisturbKind.L
+            if (field[y, x].kind == BlockKind.DISTURB_0) {
+                // L字の 角 の部分
+                if (field[y, x].obj != null) {
+                    Destroy(field[y, x].obj);
+                    field[y, x].obj = null;
+                    field[y, x].kind   = BlockKind.NONE;  // 角
+                    field[y-1, x].kind = BlockKind.NONE;  // 上
+                    field[y, x+1].kind = BlockKind.NONE;  // 右
+                }
+                // L字の 上 の部分
+                else if (field[y+1, x].kind == BlockKind.DISTURB_0 && field[y+1, x].obj != null) {
+                    Destroy(field[y+1, x].obj);
+                    field[y+1, x].obj = null;
+                    field[y, x].kind     = BlockKind.NONE;  // 上
+                    field[y+1, x].kind   = BlockKind.NONE;  // 角
+                    field[y+1, x+1].kind = BlockKind.NONE;  // 右
+                }
+                // L字の 右 の部分
+                else if (field[y, x-1].kind == BlockKind.DISTURB_0 && field[y, x-1].obj != null) {
+                    Destroy(field[y, x-1].obj);
+                    field[y, x-1].obj = null;
+                    field[y, x].kind     = BlockKind.NONE;  // 右
+                    field[y, x-1].kind   = BlockKind.NONE;  // 角
+                    field[y-1, x-1].kind = BlockKind.NONE;  // 上
+
+                }
+            }
+            // DisturbKind.Four
+            else if (field[y, x].kind == BlockKind.DISTURB_1) {
+                Destroy(field[y, 1].obj);
+                field[y, 1].obj  = null;
+                field[y, 1].kind = BlockKind.NONE;
+                field[y, 2].kind = BlockKind.NONE;
+                field[y, 3].kind = BlockKind.NONE;
+                field[y, 4].kind = BlockKind.NONE;
+            }
             return;
         }
 
