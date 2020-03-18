@@ -35,6 +35,7 @@ public class PlayManager : MonoBehaviour
             this.disturb_queue.Enqueue(dk);
         }
     }
+    private bool falling_disturb = false;
 
     [SerializeField]
     private Player player = Player.PLAYER_1;
@@ -153,7 +154,11 @@ public class PlayManager : MonoBehaviour
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
-                    after_falling();
+                    if (falling_disturb) {
+                        falling_disturb = false;
+                    } else {
+                        after_falling();
+                    }
                 }
             }
         } else {
@@ -686,6 +691,8 @@ public class PlayManager : MonoBehaviour
                     GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
                     field[0, 1].obj = obj;
                 }
+
+                falling_disturb = true;
                 fall_lock = fall();
             }
 
