@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using System;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     GameObject canvas_gameover = default;
+    [SerializeField]
+    GameObject canvas_pause = default;
 
     private static DateTime unix_epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
@@ -22,8 +25,14 @@ public class GameManager : MonoBehaviour
     }
 
     // Update is called once per frame
-    //void Update() {
-    //}
+    void Update() {
+        // ESCキーで Pause menu
+        if (Input.GetKeyDown(KeyCode.Escape) && !canvas_gameover.activeSelf) {
+            p1.SetActive(false);
+            p2.SetActive(false);
+            canvas_pause.SetActive(true);
+        }
+    }
 
     // Generate seed
     public void gen_seed() {
@@ -39,12 +48,9 @@ public class GameManager : MonoBehaviour
 
         // Enable gameover canvas
         canvas_gameover.SetActive(true);
-
-        // Set another seed
-        gen_seed();
     }
 
-    public void Press_button_retry() {
+    public void Press_button_startover() {
         // Delete all peni prefabs
         GameObject[] penis = GameObject.FindGameObjectsWithTag("peni");
         foreach (GameObject peni in penis) {
@@ -52,12 +58,30 @@ public class GameManager : MonoBehaviour
         }
 
         // Disable gameover canvas
+        canvas_pause.SetActive(false);
         canvas_gameover.SetActive(false);
 
         // p1 and p2 to active
         p1.SetActive(true);
         p2.SetActive(true);
+
+        // Set another seed
+        gen_seed();
+
         p1.GetComponent<PlayManager>().init();
         p2.GetComponent<PlayManager>().init();
+    }
+
+    public void Press_button_resume() {
+        // Disable pause canvas
+        canvas_pause.SetActive(false);
+
+        // p1 and p2 to active
+        p1.SetActive(true);
+        p2.SetActive(true);
+    }
+
+    public void Press_button_title() {
+        SceneManager.LoadScene("title");
     }
 }

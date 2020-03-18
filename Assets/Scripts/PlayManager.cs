@@ -531,11 +531,7 @@ public class PlayManager : MonoBehaviour
         score_add(score_calc(peni_count, chain_count, link_count));
 
         // Check GameOver
-        if (field[(int)Out_pos.y, (int)Out_pos.x].kind != BlockKind.NONE) {
-            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-
-            gm.GameOver(this.gameObject);
-        }
+        check_gameover();
     }
 
     /// ぺにをfieldに固定
@@ -645,6 +641,8 @@ public class PlayManager : MonoBehaviour
         neutralizing();
         // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
         descend_disturb();
+        // ゲームオーバーのチェック
+        check_gameover();
         // 相手にお邪魔を送る
         opponent_pm.push_disturbs(disturb_queue_for_send);
 
@@ -703,6 +701,15 @@ public class PlayManager : MonoBehaviour
             if (disturb_queue.Count == 0) { return; }
             disturb_queue.Dequeue();
             disturb_queue_for_send.Dequeue();
+        }
+    }
+
+    // ゲームオーバーのチェック
+    void check_gameover() {
+        if (field[(int)Out_pos.y, (int)Out_pos.x].kind != BlockKind.NONE) {
+            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+            gm.GameOver(this.gameObject);
         }
     }
 
