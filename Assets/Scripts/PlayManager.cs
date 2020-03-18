@@ -35,7 +35,6 @@ public class PlayManager : MonoBehaviour
             this.disturb_queue.Enqueue(dk);
         }
     }
-    private bool falling_disturb = false;
 
     [SerializeField]
     private Player player = Player.PLAYER_1;
@@ -96,6 +95,9 @@ public class PlayManager : MonoBehaviour
     public int seed = 0;
     private PeniRandom peni_random;
 
+    // 落下中のぺにの有無
+    private bool falling_peni = false;
+
     /// Start is called before the first frame update
     void Start() {
         // Initialized field
@@ -118,10 +120,11 @@ public class PlayManager : MonoBehaviour
     public void init() {
         peni_random.set_seed(seed);
 
-        key_lock    = false;
-        fall_lock   = false;
-        fall_end    = true;
-        fall_bottom = false;
+        key_lock     = false;
+        fall_lock    = false;
+        fall_end     = true;
+        fall_bottom  = false;
+        falling_peni = false;
 
         // Initialized field
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
@@ -143,6 +146,9 @@ public class PlayManager : MonoBehaviour
         score = 0;
         score_text.text = "0";
 
+        disturb_queue.Clear();
+        disturb_queue_for_send.Clear();
+
         current_peni = spawnNext();
     }
 
@@ -154,11 +160,7 @@ public class PlayManager : MonoBehaviour
                 eval();
                 fall_lock = fall();
                 if (!fall_lock) {
-                    if (falling_disturb) {
-                        falling_disturb = false;
-                    } else {
-                        after_falling();
-                    }
+                    after_falling();
                 }
             }
         } else {
@@ -541,6 +543,7 @@ public class PlayManager : MonoBehaviour
 
     /// ぺにをfieldに固定
     void fix_peni() {
+        falling_peni = false;
         int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 1;
         Vector3 pos = current_peni.obj.transform.position;
         pos.y = Mathf.Floor(current_peni.obj.transform.position.y);
@@ -618,6 +621,7 @@ public class PlayManager : MonoBehaviour
         current_x = 2;
         current_y = 0;
         fall_bottom = false;
+        falling_peni = true;
 
         return new Peni(kind, obj);
     }
@@ -642,6 +646,11 @@ public class PlayManager : MonoBehaviour
 
     // fall()で全ての落下が終わった後の処理
     void after_falling() {
+        // 固定されていないぺにがある場合, 何もしない
+        if (falling_peni) {
+            return;
+        }
+
         // 相殺の計算
         neutralizing();
         // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
@@ -692,7 +701,6 @@ public class PlayManager : MonoBehaviour
                     field[0, 1].obj = obj;
                 }
 
-                falling_disturb = true;
                 fall_lock = fall();
             }
 
