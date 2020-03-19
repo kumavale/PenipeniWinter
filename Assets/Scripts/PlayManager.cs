@@ -98,6 +98,9 @@ public class PlayManager : MonoBehaviour
     // 落下中のぺにの有無
     private bool falling_peni = false;
 
+    // コルーチンの復帰用キュー
+    private Queue<IEnumerator> coroutines = new Queue<IEnumerator>();
+
     /// Start is called before the first frame update
     void Start() {
         // Initialized field
@@ -115,6 +118,12 @@ public class PlayManager : MonoBehaviour
         peni_random = new PeniRandom(seed);
 
         init();
+    }
+
+    void OnEnable() {
+        foreach (var coroutine in coroutines) {
+            StartCoroutine(coroutine);
+        }
     }
 
     public void init() {
@@ -428,7 +437,9 @@ public class PlayManager : MonoBehaviour
                         fall_end = false;
 
                         field[y, x] = field[y-1, x];
-                        StartCoroutine(smooth_fall(field[y, x], -1f));
+                        IEnumerator coroutine = smooth_fall(field[y, x], -1f);
+                        coroutines.Enqueue(coroutine);
+                        StartCoroutine(coroutine);
 
                         field[y-1, x].kind = BlockKind.NONE;
                         field[y-1, x].obj  = null;
@@ -446,7 +457,9 @@ public class PlayManager : MonoBehaviour
                         field[y, x]   = field[y-1, x];
                         field[y, x+1] = field[y-1, x+1];
                         field[y-1, x] = field[y-2, x];
-                        StartCoroutine(smooth_fall(field[y, x], -1f));
+                        IEnumerator coroutine = smooth_fall(field[y, x], -1f);
+                        coroutines.Enqueue(coroutine);
+                        StartCoroutine(coroutine);
 
                         field[y-2, x].kind   = BlockKind.NONE;
                         field[y-1, x+1].kind = BlockKind.NONE;
@@ -467,7 +480,9 @@ public class PlayManager : MonoBehaviour
                         field[y, 2] = field[y-1, 2];
                         field[y, 3] = field[y-1, 3];
                         field[y, 4] = field[y-1, 4];
-                        StartCoroutine(smooth_fall(field[y, 1], -1f));
+                        IEnumerator coroutine = smooth_fall(field[y, x], -1f);
+                        coroutines.Enqueue(coroutine);
+                        StartCoroutine(coroutine);
 
                         field[y-1, 1].kind = BlockKind.NONE;
                         field[y-1, 2].kind = BlockKind.NONE;
@@ -494,6 +509,7 @@ public class PlayManager : MonoBehaviour
         }
 
         fall_end = true;
+        coroutines.Dequeue();
     }
 
     /// 評価
