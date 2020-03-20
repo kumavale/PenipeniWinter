@@ -1,6 +1,25 @@
 # ぺにぺにWINTER
-![under development](https://img.shields.io/badge/Under%20development-critical.svg)
+![stable](https://img.shields.io/badge/build-passing-success.svg)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)  
-Reproduction of "ぺにぺにWINTER" from "宇宙よりも遠い場所" (episode 5) written in C# with Unity.  
-![ScreenShot](https://user-images.githubusercontent.com/29778890/75667424-fe662180-5cba-11ea-9456-9776060a7524.png)
+宇宙よりも遠い場所(5話)より登場した「ぺにぺにWINTER」の再現
   
+![ScreenShot](https://user-images.githubusercontent.com/29778890/77157339-7b2f3300-6ae4-11ea-8920-5a9abddbcc04.png)  
+  
+## 操作方法
+
+| Action | Keys |
+| :----- | ---- |
+| Left   | A    |
+| Right  | D    |
+| Down   | S    |
+| Menu   | Escape |
+
+## ゲームシステム
+
+* フィールドは基本的に縦9マス×横4マスの格子で構成される。格子の1マスにつき1個のペンギン(ぺに)を置くことができる。  
+* 上からぺにが1つ落下してくる。ぺには種類ごとに色が異なり、色は3色ある。プレイヤーはぺにに対して横移動、高速落下のいずれかの操作を行う。  
+* 落下してきたぺにがフィールドの床やほかのぺにやお邪魔に衝突すると、その位置にぷよが固定される。  
+* 同色のぺにが3個以上くっつくと消滅し得点となる。
+* ぺにの消滅により上にあったぺにが落下する。このとき再びぺにが3個以上くっつくと消滅し、連鎖が起きる。なお、普通に3つ色を並べて消す行為だけでも1連鎖と考え、消滅した回数（○回）に応じて○連鎖と呼ばれる。複数色を同時に消した場合や同色を別箇所で消した場合でも、1連鎖扱いとなる。  
+* 左から2列目が一番上まで埋まるとゲームオーバー。
+* ぺに消滅時、L字に消えた場合相手フィールドにL字(3マス分)のお邪魔を降らせることが出来る。また、同色4つを水平に繋げて消すと、相手フィールドに横長(4マス分)のお邪魔を降らせることが出来る。  
