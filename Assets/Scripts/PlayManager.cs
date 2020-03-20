@@ -101,6 +101,11 @@ public class PlayManager : MonoBehaviour
     // コルーチンの復帰用キュー
     private Queue<IEnumerator> coroutines = new Queue<IEnumerator>();
 
+    // アニメーション
+    [SerializeField]
+    private Animator peni_jump = default;
+    private bool is_chain = false;
+
     /// Start is called before the first frame update
     void Start() {
         // Initialized field
@@ -540,6 +545,7 @@ public class PlayManager : MonoBehaviour
                             // Send DisturbKind.Four
                             disturb_queue_for_send.Enqueue(DisturbKind.Four);
                         }
+                        is_chain = true;
                         peni_count += peni_connected_count;
                         if (link_count < peni_connected_count) {
                             link_count = peni_connected_count;
@@ -667,6 +673,11 @@ public class PlayManager : MonoBehaviour
             return;
         }
 
+        // 1連鎖以上で中央のぺにをジャンプさせる
+        if (is_chain) {
+            is_chain = false;
+            peni_jump.Play("peni_jump");
+        }
         // 相殺の計算
         neutralizing();
         // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
