@@ -208,6 +208,7 @@ public class PlayManager : MonoBehaviour
                         }
                     }
                 }
+
             } else if (player == Player.PLAYER_2) {
                 // LeftArrow key
                 if (Input.GetKeyDown(KeyCode.LeftArrow)) {
@@ -558,9 +559,6 @@ public class PlayManager : MonoBehaviour
 
         // Score calculate
         score_add(score_calc(peni_count, chain_count, link_count));
-
-        // Check GameOver
-        check_gameover();
     }
 
     /// ぺにをfieldに固定

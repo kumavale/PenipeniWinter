@@ -34,6 +34,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // フォーカスがない時、ポーズ画面を表示
+    void OnApplicationFocus(bool has_focus) {
+        if (!has_focus && !canvas_gameover.activeSelf) {
+            p1.SetActive(false);
+            p2.SetActive(false);
+            canvas_pause.SetActive(true);
+        }
+    }
+
     // Generate seed
     public void gen_seed() {
         int seed = (int)(DateTime.Now - unix_epoch).TotalSeconds;
@@ -42,7 +51,6 @@ public class GameManager : MonoBehaviour
     }
 
     public void GameOver(GameObject player) {
-        Debug.Log("GameOver: " + player);
         p1.SetActive(false);
         p2.SetActive(false);
 
