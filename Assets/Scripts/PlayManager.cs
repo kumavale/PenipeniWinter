@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using Random = UnityEngine.Random;
 
 public class PlayManager : MonoBehaviour
 {
@@ -118,8 +119,9 @@ public class PlayManager : MonoBehaviour
 
         opponent_pm = opponent.GetComponent<PlayManager>();
 
-        // 乱数の初期化
-        seed = (int)System.DateTime.Now.Second;
+        // UNIX時間で乱数の初期化
+        System.DateTime unix_epoch = new System.DateTime(1970, 1, 1, 0, 0, 0, 0);
+        seed = (int)(System.DateTime.Now - unix_epoch).TotalSeconds;
         peni_random = new PeniRandom(seed);
 
         init();
