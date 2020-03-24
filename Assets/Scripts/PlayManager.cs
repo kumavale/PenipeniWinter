@@ -78,7 +78,6 @@ public class PlayManager : MonoBehaviour
 
     bool key_lock = false;
     bool fall_lock = false;
-    bool fall_end = true;
     bool fall_bottom = false;
 
     const float fall_spead = -0.01f;  // 落下スピード / 1frame
@@ -90,13 +89,14 @@ public class PlayManager : MonoBehaviour
         new Vector2( 1,  0),  // Right
     };
 
-    Vector2 out_pos = new Vector2(2, 1);  // x, y
-
     public int seed = 0;
     private PeniRandom peni_random;
 
     // 落下中のぺにの有無
     private bool falling_peni = false;
+    // after_falling関数が呼ばれた時に真となる
+    // 全てのコルーチンが終了していたら偽になる
+    private bool after_falling_invoked = false;
 
     // コルーチンの復帰用キュー
     private Queue<IEnumerator> coroutines = new Queue<IEnumerator>();
@@ -136,9 +136,10 @@ public class PlayManager : MonoBehaviour
 
         key_lock     = false;
         fall_lock    = false;
-        fall_end     = true;
         fall_bottom  = false;
         falling_peni = false;
+        is_chain     = false;
+        after_falling_invoked = false;
 
         // Initialized field
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
@@ -168,13 +169,28 @@ public class PlayManager : MonoBehaviour
 
     /// Update is called once per frame
     void Update() {
+        // (試し) インライン化させないなら普通の関数にする
+        void fix() {
+            key_lock = true;
+            chain_count = 0;
+            disturb_queue_for_send.Clear();
+            fix_peni();
+            fall_lock = true;
+        }
+
         if (fall_lock) {
-            if (fall_end) {
-                ++chain_count;
-                eval();
-                fall_lock = fall();
-                if (!fall_lock) {
-                    after_falling();
+            //Debug.Log("1");
+            if (coroutines.Count == 0) {
+                if (after_falling_invoked) {
+                    after_falling_invoked = false;
+                    after_falling_disturb();
+                } else {
+                    ++chain_count;
+                    eval();
+                    fall();
+                    if (!fall_lock) {
+                        after_falling();
+                    }
                 }
             }
         } else {
@@ -197,15 +213,7 @@ public class PlayManager : MonoBehaviour
                         move_y(-0.2f);
                         score_add(1);
                     } else if (!key_lock) {
-                        key_lock = true;
-                        chain_count = 0;
-                        disturb_queue_for_send.Clear();
-                        fix_peni();
-                        eval();
-                        fall_lock = fall();
-                        if (!fall_lock) {
-                            after_falling();
-                        }
+                        fix();
                     }
                 }
 
@@ -228,15 +236,7 @@ public class PlayManager : MonoBehaviour
                         move_y(-0.2f);
                         score_add(1);
                     } else if (!key_lock) {
-                        key_lock = true;
-                        chain_count = 0;
-                        disturb_queue_for_send.Clear();
-                        fix_peni();
-                        eval();
-                        fall_lock = fall();
-                        if (!fall_lock) {
-                            after_falling();
-                        }
+                        fix();
                     }
                 }
             } else {
@@ -246,36 +246,21 @@ public class PlayManager : MonoBehaviour
                         move_y(-0.2f);
                         score_add(1);
                     } else {
-                        key_lock = true;
-                        chain_count = 0;
-                        disturb_queue_for_send.Clear();
-                        fix_peni();
-                        eval();
-                        fall_lock = fall();
-                        if (!fall_lock) {
-                            after_falling();
-                        }
+                        fix();
                     }
                 } else {
-                    if (Random.Range(0, 100) == 0) {  // 1/400f
+                    if (Random.Range(0, 100) == 0) {  // 1/100f
                         fall_bottom = true;
                     }
                 }
             }
 
+
             // 落下
             if (can_fall(fall_spead)) {
                 move_y(fall_spead);
             } else if (!key_lock) {
-                key_lock = true;
-                chain_count = 0;
-                disturb_queue_for_send.Clear();
-                fix_peni();
-                eval();
-                fall_lock = fall();
-                if (!fall_lock) {
-                    after_falling();
-                }
+                fix();
             }
         }
     }
@@ -303,8 +288,6 @@ public class PlayManager : MonoBehaviour
 
     /// L字に繋がっているか
     private bool[,] can_erase_field;  // get_can_erase_field用field
-
-    public Vector2 Out_pos { get => out_pos; set => out_pos = value; }
 
     void get_can_erase_field(int x, int y, Peni p) {
         if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
@@ -423,8 +406,8 @@ public class PlayManager : MonoBehaviour
     }
 
     /// erase_peni()時, 整地する
-    bool fall() {
-        bool ret = false;
+    void fall() {
+        bool fall_more_than_1 = false;
         bool falled = false;
 
         do {
@@ -437,10 +420,9 @@ public class PlayManager : MonoBehaviour
                          || field[y-1, x].kind == BlockKind.PENI_1
                          || field[y-1, x].kind == BlockKind.PENI_2))
                     {
-                        ret = true;
+                        fall_more_than_1 = true;
                         falled = true;
                         fall_lock = true;
-                        fall_end = false;
 
                         field[y, x] = field[y-1, x];
                         IEnumerator coroutine = smooth_fall(field[y, x], -1f);
@@ -455,10 +437,9 @@ public class PlayManager : MonoBehaviour
                     && field[y-1, x].obj != null
                     && field[y, x].kind   == BlockKind.NONE
                     && field[y, x+1].kind == BlockKind.NONE) {
-                        ret = true;
+                        fall_more_than_1 = true;
                         falled = true;
                         fall_lock = true;
-                        fall_end = false;
 
                         field[y, x]   = field[y-1, x];
                         field[y, x+1] = field[y-1, x+1];
@@ -477,10 +458,9 @@ public class PlayManager : MonoBehaviour
                     && field[y, 2].kind == BlockKind.NONE
                     && field[y, 3].kind == BlockKind.NONE
                     && field[y, 4].kind == BlockKind.NONE) {
-                        ret = true;
+                        fall_more_than_1 = true;
                         falled = true;
                         fall_lock = true;
-                        fall_end = false;
 
                         field[y, 1] = field[y-1, 1];
                         field[y, 2] = field[y-1, 2];
@@ -500,7 +480,7 @@ public class PlayManager : MonoBehaviour
             }
         } while (falled);
 
-        return ret;
+        fall_lock =  fall_more_than_1;
     }
 
     /// 落下アニメーション
@@ -514,7 +494,6 @@ public class PlayManager : MonoBehaviour
             yield return null;
         }
 
-        fall_end = true;
         coroutines.Dequeue();
     }
 
@@ -664,12 +643,15 @@ public class PlayManager : MonoBehaviour
         return _peni_count * (chain.Chain_bonus[_chain_count] + chain.Link_bonus[_link_count]) * 10;
     }
 
-    // fall()で全ての落下が終わった後の処理
+    // fall()で全てのぺにが落下が終わった後の処理
     void after_falling() {
         // 固定されていないぺにがある場合, 何もしない
         if (falling_peni) {
             return;
         }
+
+        after_falling_invoked = true;
+        fall_lock = true;
 
         // 1連鎖以上で中央のぺにをジャンプさせる
         if (is_chain) {
@@ -680,10 +662,14 @@ public class PlayManager : MonoBehaviour
         neutralizing();
         // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
         descend_disturb();
-        // ゲームオーバーのチェック
-        check_gameover();
         // 相手にお邪魔を送る
         opponent_pm.push_disturbs(disturb_queue_for_send);
+    }
+
+    // fall()で全てのお邪魔が落下が終わった後の処理
+    void after_falling_disturb() {
+        // ゲームオーバーのチェック
+        check_gameover();
 
         current_peni = spawnNext();
         if (player == Player.CPU) {
@@ -699,6 +685,7 @@ public class PlayManager : MonoBehaviour
     // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
     void descend_disturb() {
         if (disturb_queue.Count != 0) {
+            fall_lock = true;
             foreach (DisturbKind dk in disturb_queue) {
                 if (dk == DisturbKind.L) {
                     // 1/2の確率で左右に振り分ける
@@ -726,11 +713,11 @@ public class PlayManager : MonoBehaviour
                     field[0, 1].obj = obj;
                 }
 
-                fall_lock = fall();
+                //Debug.Break();
+                fall();
             }
 
             disturb_queue.Clear();
-            //show_field(Player.CPU);
         }
     }
 
@@ -746,9 +733,12 @@ public class PlayManager : MonoBehaviour
 
     // ゲームオーバーのチェック
     void check_gameover() {
-        if (field[(int)Out_pos.y, (int)Out_pos.x].kind != BlockKind.NONE) {
+        // 2列目一番上のX印部分かその上が埋まっている場合ゲームオーバー
+        if (field[0, 2].kind == BlockKind.NONE
+         && field[1, 2].kind == BlockKind.NONE) {
+             return;
+        } else {
             GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-
             gm.GameOver(this.gameObject);
         }
     }
