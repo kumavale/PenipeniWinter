@@ -314,7 +314,7 @@ public class PlayManager : MonoBehaviour
         get_can_erase_field(_x, _y, p);
 
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
-            for (int x = 0; x < FIELD_WIDTH; ++x) {
+            for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 if (can_erase_field[y, x]) {
                     int up_x    = x + (int)directions[0].x;
                     int up_y    = y + (int)directions[0].y;
@@ -341,9 +341,13 @@ public class PlayManager : MonoBehaviour
     }
     // 水平方向に4つ繋がっているか
     bool is_4_horizontal_connected(int _y) {
-        return (field[_y, 1].kind == field[_y, 2].kind)
-            && (field[_y, 1].kind == field[_y, 3].kind)
-            && (field[_y, 1].kind == field[_y, 4].kind);
+        for (int y = _y; y < FIELD_HEIGHT-1; ++y) {
+            if (can_erase_field[y, 1] && can_erase_field[y, 2]   
+             && can_erase_field[y, 3] && can_erase_field[y, 4]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// 繋がっている"ぺに"を削除する
@@ -518,12 +522,26 @@ public class PlayManager : MonoBehaviour
                     }
                     int peni_connected_count = get_peni_connected_count(x, y, field[y, x].kind, 0);
                     if (3 <= peni_connected_count) {
-                        if (is_L_connected(x, y, field[y, x])) {
-                            // Send DisturbKind.L
-                            disturb_queue_for_send.Enqueue(DisturbKind.L);
-                        } else if (is_4_horizontal_connected(y)) {
-                            // Send DisturbKind.Four
-                            disturb_queue_for_send.Enqueue(DisturbKind.Four);
+                        bool is_L = is_L_connected(x, y, field[y, x]);
+                        bool is_4 = is_4_horizontal_connected(y);
+
+                        if (is_L && is_4) {
+                            if (7 <= peni_connected_count) {
+                                // Send DisturbKind.L and DisturbKind.Four
+                                disturb_queue_for_send.Enqueue(DisturbKind.L);
+                                disturb_queue_for_send.Enqueue(DisturbKind.Four);
+                            } else {
+                                // Send DisturbKind.Four
+                                disturb_queue_for_send.Enqueue(DisturbKind.Four);
+                            }
+                        } else {
+                            if (is_L) {
+                                // Send DisturbKind.L
+                                disturb_queue_for_send.Enqueue(DisturbKind.L);
+                            } else if (is_4) {
+                                // Send DisturbKind.Four
+                                disturb_queue_for_send.Enqueue(DisturbKind.Four);
+                            }
                         }
                         is_chain = true;
                         peni_count += peni_connected_count;
