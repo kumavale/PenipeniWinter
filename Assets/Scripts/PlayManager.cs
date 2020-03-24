@@ -19,7 +19,7 @@ public class PlayManager : MonoBehaviour
     [SerializeField]
     private const int FIELD_WIDTH  = 4 + 2;  // 4 + 壁
     [SerializeField]
-    private const int FIELD_HEIGHT = 1 + 9 + 1;  // 番兵 + 9 + 壁
+    private const int FIELD_HEIGHT = 2 + 9 + 1;  // 番兵2 + 9 + 壁
 
     [SerializeField]
     private GameObject[] penis = default;  // peni_0, peni_1, peni_2
@@ -563,7 +563,7 @@ public class PlayManager : MonoBehaviour
     /// ぺにをfieldに固定
     void fix_peni() {
         falling_peni = false;
-        int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 1;
+        int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 2;
         Vector3 pos = current_peni.obj.transform.position;
         pos.y = Mathf.Floor(current_peni.obj.transform.position.y);
         if (player == Player.PLAYER_1) {
@@ -578,7 +578,7 @@ public class PlayManager : MonoBehaviour
 
     /// 落下可能か否か
     bool can_fall(float y) {
-        int y2 = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + y));
+        int y2 = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + y)+1);
         return (y2 < FIELD_HEIGHT-1) && field[y2+1, current_x].kind == BlockKind.NONE;
     }
 
@@ -609,7 +609,7 @@ public class PlayManager : MonoBehaviour
 
     /// y軸方向に移動可能か否か
     void move_y(float distance) {
-        int y = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + distance)) - 1;
+        int y = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + distance));
 
         Vector3 pos = current_peni.obj.transform.position;
         pos.y += distance;
@@ -638,7 +638,7 @@ public class PlayManager : MonoBehaviour
         }
 
         current_x = 2;
-        current_y = 0;
+        current_y = 1;
         fall_bottom = false;
         falling_peni = true;
 
@@ -689,15 +689,17 @@ public class PlayManager : MonoBehaviour
     // fall()で全てのお邪魔が落下が終わった後の処理
     void after_falling_disturb() {
         // ゲームオーバーのチェック
-        check_gameover();
+        bool is_gameover = check_gameover();
 
-        current_peni = spawnNext();
-        if (player == Player.CPU) {
-            switch (Random.Range(0, 4)) {
-                case 0: /* Do nothing */ break;
-                case 1: StartCoroutine(move_x(-1)); break;
-                case 2: StartCoroutine(move_x(1));  break;
-                case 3: StartCoroutine(move_x(2));  break;
+        if (!is_gameover) {
+            current_peni = spawnNext();
+            if (player == Player.CPU) {
+                switch (Random.Range(0, 4)) {
+                    case 0: /* Do nothing */ break;
+                    case 1: StartCoroutine(move_x(-1)); break;
+                    case 2: StartCoroutine(move_x(1));  break;
+                    case 3: StartCoroutine(move_x(2));  break;
+                }
             }
         }
     }
@@ -711,7 +713,7 @@ public class PlayManager : MonoBehaviour
                     // 1/2の確率で左右に振り分ける
                     int x = Random.Range(0, 2)==0 ? 1 : 3;
                     // もしフィールドが上まで埋まっているなら逆側に置く
-                    if (field[1, x].kind != BlockKind.NONE || field[1, x+1].kind != BlockKind.NONE) {
+                    if (field[2, x].kind != BlockKind.NONE || field[2, x+1].kind != BlockKind.NONE) {
                         x = x==1 ? 3 : 1;
                     }
                     field[0, x].kind   = BlockKind.DISTURB_0;
@@ -719,21 +721,20 @@ public class PlayManager : MonoBehaviour
                     field[1, x+1].kind = BlockKind.DISTURB_0;
                     Vector3 pos = transform.position;
                     pos.x += x - 0.5f;
-                    pos.y -= 0.5f;
+                    pos.y += 0.5f;
                     GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
                     field[1, x].obj = obj;
                 } else {
-                    field[0, 1].kind = BlockKind.DISTURB_1;
-                    field[0, 2].kind = BlockKind.DISTURB_1;
-                    field[0, 3].kind = BlockKind.DISTURB_1;
-                    field[0, 4].kind = BlockKind.DISTURB_1;
+                    field[1, 1].kind = BlockKind.DISTURB_1;
+                    field[1, 2].kind = BlockKind.DISTURB_1;
+                    field[1, 3].kind = BlockKind.DISTURB_1;
+                    field[1, 4].kind = BlockKind.DISTURB_1;
                     Vector3 pos = transform.position;
                     pos.x += 1.5f;
                     GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
-                    field[0, 1].obj = obj;
+                    field[1, 1].obj = obj;
                 }
 
-                //Debug.Break();
                 fall();
             }
 
@@ -752,14 +753,16 @@ public class PlayManager : MonoBehaviour
     }
 
     // ゲームオーバーのチェック
-    void check_gameover() {
+    bool check_gameover() {
         // 2列目一番上のX印部分かその上が埋まっている場合ゲームオーバー
         if (field[0, 2].kind == BlockKind.NONE
-         && field[1, 2].kind == BlockKind.NONE) {
-             return;
+         && field[1, 2].kind == BlockKind.NONE
+         && field[2, 2].kind == BlockKind.NONE) {
+             return false;
         } else {
             GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
             gm.GameOver(this.gameObject);
+            return true;
         }
     }
 
