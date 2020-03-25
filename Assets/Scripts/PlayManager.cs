@@ -201,26 +201,22 @@ public class PlayManager : MonoBehaviour
                     }
                 }
             }
-        } else {
+        } else if (!key_lock) {
             if (player == Player.PLAYER_1) {
                 // A key
                 if (Input.GetKeyDown(KeyCode.A)) {
-                    if (!key_lock) {
-                        key_lock = true;
-                        StartCoroutine(move_x(-1));
-                    }
+                    key_lock = true;
+                    StartCoroutine(move_x(-1));
                 // D key
                 } else if (Input.GetKeyDown(KeyCode.D)) {
-                    if (!key_lock) {
-                        key_lock = true;
-                        StartCoroutine(move_x(1));
-                    }
+                    key_lock = true;
+                    StartCoroutine(move_x(1));
                 // S key
                 } else if (Input.GetKey(KeyCode.S)) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
                         score_add(1);
-                    } else if (!key_lock) {
+                    } else {
                         fix();
                     }
                 }
@@ -228,22 +224,18 @@ public class PlayManager : MonoBehaviour
             } else if (player == Player.PLAYER_2) {
                 // LeftArrow key
                 if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-                    if (!key_lock) {
-                        key_lock = true;
-                        StartCoroutine(move_x(-1));
-                    }
+                    key_lock = true;
+                    StartCoroutine(move_x(-1));
                 // RightArrow key
                 } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-                    if (!key_lock) {
-                        key_lock = true;
-                        StartCoroutine(move_x(1));
-                    }
+                    key_lock = true;
+                    StartCoroutine(move_x(1));
                 // DownArrow key
                 } else if (Input.GetKey(KeyCode.DownArrow)) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
                         score_add(1);
-                    } else if (!key_lock) {
+                    } else {
                         fix();
                     }
                 }
@@ -264,21 +256,25 @@ public class PlayManager : MonoBehaviour
             }
 
             // 落下
-            if (can_fall(fall_spead)) {
-                move_y(fall_spead);
-            } else if (!key_lock) {
-                fix();
+            if (!key_lock) {
+                if (can_fall(fall_spead)) {
+                    move_y(fall_spead);
+                } else {
+                    fix();
+                }
             }
+        } else if (current_peni.obj == null) {
+            fall_lock = true;
         }
     }
 
     // ぺにが落下しきった時の処理
     private void fix() {
-        key_lock = true;
+        key_lock  = true;
+        fall_lock = true;
         chain_count = 0;
         disturb_queue_for_send.Clear();
         fix_peni();
-        fall_lock = true;
     }
 
     /// 繋がっている"ぺに"の数を返す
@@ -576,7 +572,6 @@ public class PlayManager : MonoBehaviour
 
     /// ぺにをfieldに固定
     private void fix_peni() {
-        falling_peni = false;
         int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 2;
         Vector3 pos = current_peni.obj.transform.position;
         pos.y = Mathf.Floor(current_peni.obj.transform.position.y);
@@ -588,6 +583,8 @@ public class PlayManager : MonoBehaviour
         current_peni.obj.transform.position = pos;
         field[y, current_x].kind = current_peni.kind;
         field[y, current_x].obj = current_peni.obj;
+        falling_peni = false;
+        current_peni.obj = null;
     }
 
     /// 落下可能か否か
@@ -708,6 +705,7 @@ public class PlayManager : MonoBehaviour
         // ゲームオーバーでなければ, 次のぺにを生成
         // CPUは落下予定の列へ移動する
         if (!is_gameover) {
+            key_lock = false;
             current_peni = spawnNext();
             if (player == Player.CPU) {
                 switch (Random.Range(0, 4)) {
@@ -722,40 +720,37 @@ public class PlayManager : MonoBehaviour
 
     // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
     private void descend_disturb() {
-        if (disturb_queue.Count != 0) {
-            fall_lock = true;
-            foreach (DisturbKind dk in disturb_queue) {
-                if (dk == DisturbKind.L) {
-                    // 1/2の確率で左右に振り分ける
-                    int x = Random.Range(0, 2)==0 ? 1 : 3;
-                    // もしフィールドが上まで埋まっているなら逆側に置く
-                    if (field[2, x].kind != BlockKind.NONE || field[2, x+1].kind != BlockKind.NONE) {
-                        x = x==1 ? 3 : 1;
-                    }
-                    field[0, x].kind   = BlockKind.DISTURB_0;
-                    field[1, x].kind   = BlockKind.DISTURB_0;
-                    field[1, x+1].kind = BlockKind.DISTURB_0;
-                    Vector3 pos = transform.position;
-                    pos.x += x - 0.5f;
-                    pos.y += 0.5f;
-                    GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
-                    field[1, x].obj = obj;
-                } else {
-                    field[1, 1].kind = BlockKind.DISTURB_1;
-                    field[1, 2].kind = BlockKind.DISTURB_1;
-                    field[1, 3].kind = BlockKind.DISTURB_1;
-                    field[1, 4].kind = BlockKind.DISTURB_1;
-                    Vector3 pos = transform.position;
-                    pos.x += 1.5f;
-                    GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
-                    field[1, 1].obj = obj;
+        foreach (DisturbKind dk in disturb_queue) {
+            if (dk == DisturbKind.L) {
+                // 1/2の確率で左右に振り分ける
+                int x = Random.Range(0, 2)==0 ? 1 : 3;
+                // もしフィールドが上まで埋まっているなら逆側に置く
+                if (field[2, x].kind != BlockKind.NONE || field[2, x+1].kind != BlockKind.NONE) {
+                    x = x==1 ? 3 : 1;
                 }
-
-                fall();
+                field[0, x].kind   = BlockKind.DISTURB_0;
+                field[1, x].kind   = BlockKind.DISTURB_0;
+                field[1, x+1].kind = BlockKind.DISTURB_0;
+                Vector3 pos = transform.position;
+                pos.x += x - 0.5f;
+                pos.y += 0.5f;
+                GameObject obj = (GameObject)Instantiate(disturbs[0], pos, Quaternion.identity);
+                field[1, x].obj = obj;
+            } else {
+                field[1, 1].kind = BlockKind.DISTURB_1;
+                field[1, 2].kind = BlockKind.DISTURB_1;
+                field[1, 3].kind = BlockKind.DISTURB_1;
+                field[1, 4].kind = BlockKind.DISTURB_1;
+                Vector3 pos = transform.position;
+                pos.x += 1.5f;
+                GameObject obj = (GameObject)Instantiate(disturbs[1], pos, Quaternion.identity);
+                field[1, 1].obj = obj;
             }
 
-            disturb_queue.Clear();
+            fall();
         }
+
+        disturb_queue.Clear();
     }
 
     // 相殺の計算
