@@ -24,7 +24,7 @@ public class UIAdjuster : MonoBehaviour {
     //protected virtual void Update () {
     //}
 
-    IEnumerator Check_adjust() {
+    private IEnumerator Check_adjust() {
         while (true) {
             //アス比が変わったら調整
             if (resolution_x != Screen.width) {

@@ -46,6 +46,7 @@ public class PlayManager : MonoBehaviour
     private int score = 0;
 
     private Peni[,] field;  // FIELD_HEIGHT x FIELD_WIDTH
+    private bool[,] can_erase_field;  // get_can_erase_field用field
 
     public enum Player {
         PLAYER_1,
@@ -74,16 +75,16 @@ public class PlayManager : MonoBehaviour
         }
     }
 
-    Peni current_peni;  // 操作中のPeni
-    int current_x, current_y;  // 操作中のPeniの x,y 座標
+    private Peni current_peni;  // 操作中のPeni
+    private int current_x, current_y;  // 操作中のPeniの x,y 座標
 
-    bool key_lock = false;
-    bool fall_lock = false;
-    bool fall_bottom = false;
+    private bool key_lock = false;
+    private bool fall_lock = false;
+    private bool fall_bottom = false;
 
-    const float fall_spead = -0.01f;  // 落下スピード / 1frame
+    private const float fall_spead = -0.01f;  // 落下スピード / 1frame
 
-    Vector2[] directions = {
+    private Vector2[] directions = {
         new Vector2( 0, -1),  // Up
         new Vector2(-1,  0),  // Left
         new Vector2( 0,  1),  // Down
@@ -113,6 +114,19 @@ public class PlayManager : MonoBehaviour
         field = new Peni[FIELD_HEIGHT, FIELD_WIDTH];
         checked_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
         can_erase_field = new bool[FIELD_HEIGHT, FIELD_WIDTH];
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            for (int x = 0; x < FIELD_WIDTH; ++x) {
+                field[y, x] = new Peni(BlockKind.NONE, null);
+            }
+        }
+
+        // checked_fieldの番兵
+        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+            checked_field[y, 0] = checked_field[y, FIELD_WIDTH-1] = true;
+        }
+        for (int x = 0; x < FIELD_WIDTH; ++x) {
+            checked_field[0, x] = checked_field[FIELD_HEIGHT-1, x] = true;
+        }
 
         chain = this.GetComponent<Chain>();
         score_text = score_object.GetComponent<Text>();
@@ -127,7 +141,7 @@ public class PlayManager : MonoBehaviour
         init();
     }
 
-    void OnEnable() {
+    private void OnEnable() {
         foreach (var coroutine in coroutines) {
             StartCoroutine(coroutine);
         }
@@ -136,17 +150,17 @@ public class PlayManager : MonoBehaviour
     public void init() {
         peni_random.set_seed(seed);
 
-        key_lock     = false;
-        fall_lock    = false;
-        fall_bottom  = false;
-        falling_peni = false;
-        is_chain     = false;
+        key_lock              = false;
+        fall_lock             = false;
+        fall_bottom           = false;
+        falling_peni          = false;
         after_falling_invoked = false;
+        is_chain              = false;
 
-        // Initialized field
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
-                field[y, x] = new Peni(BlockKind.NONE, null);
+                field[y, x].kind = BlockKind.NONE;
+                field[y, x].obj  = null;
             }
         }
         // Side wall
@@ -162,26 +176,18 @@ public class PlayManager : MonoBehaviour
         // Score
         score = 0;
         score_text.text = "0";
+        chain_count = 0;
 
         disturb_queue.Clear();
         disturb_queue_for_send.Clear();
+        coroutines.Clear();
 
         current_peni = spawnNext();
     }
 
     /// Update is called once per frame
-    void Update() {
-        // (試し) インライン化させないなら普通の関数にする
-        void fix() {
-            key_lock = true;
-            chain_count = 0;
-            disturb_queue_for_send.Clear();
-            fix_peni();
-            fall_lock = true;
-        }
-
+    private void Update() {
         if (fall_lock) {
-            //Debug.Log("1");
             if (coroutines.Count == 0) {
                 if (after_falling_invoked) {
                     after_falling_invoked = false;
@@ -257,7 +263,6 @@ public class PlayManager : MonoBehaviour
                 }
             }
 
-
             // 落下
             if (can_fall(fall_spead)) {
                 move_y(fall_spead);
@@ -267,12 +272,19 @@ public class PlayManager : MonoBehaviour
         }
     }
 
+    // ぺにが落下しきった時の処理
+    private void fix() {
+        key_lock = true;
+        chain_count = 0;
+        disturb_queue_for_send.Clear();
+        fix_peni();
+        fall_lock = true;
+    }
+
     /// 繋がっている"ぺに"の数を返す
     private bool[,] checked_field;
     int get_peni_connected_count(int x, int y, BlockKind k, int cnt) {
-        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
-            || checked_field[y, x] || field[y, x].kind != k)
-        {
+        if (checked_field[y, x] || field[y, x].kind != k) {
             return cnt;
         }
 
@@ -288,11 +300,9 @@ public class PlayManager : MonoBehaviour
         return cnt;
     }
 
-    /// L字に繋がっているか
-    private bool[,] can_erase_field;  // get_can_erase_field用field
-
-    void get_can_erase_field(int x, int y, Peni p) {
-        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
+    // 削除出来るぺにのみtrueのフィールドを作成する
+    private void get_can_erase_field(int x, int y, Peni p) {
+        if (x <= 0 || FIELD_WIDTH-1 <= x || y <= 0 || FIELD_HEIGHT-1 <= y
             || field[y, x].kind != p.kind || can_erase_field[y, x])
         {
             return;
@@ -306,7 +316,10 @@ public class PlayManager : MonoBehaviour
             get_can_erase_field(x2, y2, p);
         }
     }
-    bool is_L_connected(int _x, int _y, Peni p) {
+
+    /// L字に繋がっているか
+    private bool is_L_connected(int _x, int _y, Peni p) {
+        // can_erase_fieldの初期化
         for (int y = 0; y < FIELD_HEIGHT; ++y) {
             for (int x = 0; x < FIELD_WIDTH; ++x) {
                 can_erase_field[y, x] = false;
@@ -315,7 +328,7 @@ public class PlayManager : MonoBehaviour
 
         get_can_erase_field(_x, _y, p);
 
-        for (int y = 0; y < FIELD_HEIGHT; ++y) {
+        for (int y = 1; y < FIELD_HEIGHT-1; ++y) {
             for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 if (can_erase_field[y, x]) {
                     int up_x    = x + (int)directions[0].x;
@@ -342,7 +355,8 @@ public class PlayManager : MonoBehaviour
         return false;
     }
     // 水平方向に4つ繋がっているか
-    bool is_4_horizontal_connected(int _y) {
+    // can_erase_fieldが正しく処理されている必要がある
+    private bool is_4_horizontal_connected(int _y) {
         for (int y = _y; y < FIELD_HEIGHT-1; ++y) {
             if (can_erase_field[y, 1] && can_erase_field[y, 2]   
              && can_erase_field[y, 3] && can_erase_field[y, 4]) {
@@ -353,8 +367,8 @@ public class PlayManager : MonoBehaviour
     }
 
     /// 繋がっている"ぺに"を削除する
-    void erase_peni(int x, int y, Peni p) {
-        if (x < 0 || FIELD_WIDTH <= x || y < 0 || FIELD_HEIGHT <= y
+    private void erase_peni(int x, int y, Peni p) {
+        if (x <= 0 || FIELD_WIDTH-1 <= x || y <= 0 || FIELD_HEIGHT-1 <= y
             || field[y, x].kind != p.kind)
         {
             // お邪魔が隣接していたら, お邪魔も消す
@@ -395,6 +409,7 @@ public class PlayManager : MonoBehaviour
                 field[y, 3].kind = BlockKind.NONE;
                 field[y, 4].kind = BlockKind.NONE;
             }
+
             return;
         }
 
@@ -411,8 +426,8 @@ public class PlayManager : MonoBehaviour
         }
     }
 
-    /// erase_peni()時, 整地する
-    void fall() {
+    /// ぺに,お邪魔を落下させる
+    private void fall() {
         bool fall_more_than_1 = false;
         bool falled = false;
 
@@ -426,9 +441,9 @@ public class PlayManager : MonoBehaviour
                          || field[y-1, x].kind == BlockKind.PENI_1
                          || field[y-1, x].kind == BlockKind.PENI_2))
                     {
+                        falled           = true;
+                        fall_lock        = true;
                         fall_more_than_1 = true;
-                        falled = true;
-                        fall_lock = true;
 
                         field[y, x] = field[y-1, x];
                         IEnumerator coroutine = smooth_fall(field[y, x], -1f);
@@ -490,7 +505,7 @@ public class PlayManager : MonoBehaviour
     }
 
     /// 落下アニメーション
-    IEnumerator smooth_fall(Peni p, float distance) {
+    private IEnumerator smooth_fall(Peni p, float distance) {
         const int speed = 30;
 
         for (int _i = 0; _i < speed; ++_i) {
@@ -505,11 +520,10 @@ public class PlayManager : MonoBehaviour
 
     /// 評価
     /// "ぺに"を削除できるなら削除
-    /// ゲームオーバー判定
-    void eval() {
+    private void eval() {
         // チェック用配列の初期化
-        for (int y = 0; y < FIELD_HEIGHT; ++y) {
-            for (int x = 0; x < FIELD_WIDTH; ++x) {
+        for (int y = 1; y < FIELD_HEIGHT-1; ++y) {
+            for (int x = 1; x < FIELD_WIDTH-1; ++x) {
                 checked_field[y, x] = false;
             }
         }
@@ -561,7 +575,7 @@ public class PlayManager : MonoBehaviour
     }
 
     /// ぺにをfieldに固定
-    void fix_peni() {
+    private void fix_peni() {
         falling_peni = false;
         int y = (int)Mathf.Floor(-current_peni.obj.transform.position.y) + 2;
         Vector3 pos = current_peni.obj.transform.position;
@@ -577,13 +591,13 @@ public class PlayManager : MonoBehaviour
     }
 
     /// 落下可能か否か
-    bool can_fall(float y) {
-        int y2 = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + y)+1);
-        return (y2 < FIELD_HEIGHT-1) && field[y2+1, current_x].kind == BlockKind.NONE;
+    private bool can_fall(float distance) {
+        int y = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + distance)+1);
+        return (y < FIELD_HEIGHT-1) && field[y+1, current_x].kind == BlockKind.NONE;
     }
 
     /// x軸方向に移動可能ならする
-    IEnumerator move_x(int distance) {
+    private IEnumerator move_x(int distance) {
         const int speed = 4;
 
         int dir = distance < 0 ? -1 : 1;
@@ -608,7 +622,7 @@ public class PlayManager : MonoBehaviour
     }
 
     /// y軸方向に移動可能か否か
-    void move_y(float distance) {
+    private void move_y(float distance) {
         int y = (int)Mathf.Floor(-(current_peni.obj.transform.position.y + distance));
 
         Vector3 pos = current_peni.obj.transform.position;
@@ -620,7 +634,7 @@ public class PlayManager : MonoBehaviour
     }
 
     /// Nextぺにを生成
-    Peni spawnNext() {
+    private Peni spawnNext() {
         // Random index
         int i = peni_random.Range(0, penis.Length);
 
@@ -634,7 +648,7 @@ public class PlayManager : MonoBehaviour
             case 0:  kind = BlockKind.PENI_0; break;
             case 1:  kind = BlockKind.PENI_1; break;
             case 2:  kind = BlockKind.PENI_2; break;
-            default: kind = BlockKind.NONE; break;
+            default: kind = BlockKind.NONE;   break;
         }
 
         current_x = 2;
@@ -646,25 +660,25 @@ public class PlayManager : MonoBehaviour
     }
 
     // スコアを加算し、描画する
-    void score_add(int s) {
+    private void score_add(int s) {
         this.score += s;
         score_text.text = this.score.ToString();
     }
 
     // 得点計算
     // 消したぺにの個数 * (連鎖ボーナス + 連結ボーナス) * 10
-    int score_calc(int _peni_count, int _chain_count, int _link_count) {
-        _link_count -= 3;
-        if (_link_count < 0) {
-            _link_count = 0;
-        } else if(7 < _link_count) {
-            _link_count = 7;
+    private int score_calc(int peni_count, int chain_count, int link_count) {
+        link_count -= 3;
+        if (link_count < 0) {
+            link_count = 0;
+        } else if(7 < link_count) {
+            link_count = 7;
         }
-        return _peni_count * (chain.Chain_bonus[_chain_count] + chain.Link_bonus[_link_count]) * 10;
+        return peni_count * (chain.Chain_bonus[chain_count] + chain.Link_bonus[link_count]) * 10;
     }
 
     // fall()で全てのぺにが落下が終わった後の処理
-    void after_falling() {
+    private void after_falling() {
         // 固定されていないぺにがある場合, 何もしない
         if (falling_peni) {
             return;
@@ -687,10 +701,12 @@ public class PlayManager : MonoBehaviour
     }
 
     // fall()で全てのお邪魔が落下が終わった後の処理
-    void after_falling_disturb() {
+    private void after_falling_disturb() {
         // ゲームオーバーのチェック
         bool is_gameover = check_gameover();
 
+        // ゲームオーバーでなければ, 次のぺにを生成
+        // CPUは落下予定の列へ移動する
         if (!is_gameover) {
             current_peni = spawnNext();
             if (player == Player.CPU) {
@@ -705,7 +721,7 @@ public class PlayManager : MonoBehaviour
     }
 
     // disturb_queueにお邪魔が溜まっているなら自フィールドにお邪魔を降らす
-    void descend_disturb() {
+    private void descend_disturb() {
         if (disturb_queue.Count != 0) {
             fall_lock = true;
             foreach (DisturbKind dk in disturb_queue) {
@@ -744,7 +760,7 @@ public class PlayManager : MonoBehaviour
 
     // 相殺の計算
     // お邪魔の種類は関係なく, 数で中和する
-    void neutralizing() {
+    private void neutralizing() {
         for (int _q = disturb_queue_for_send.Count; 0 < _q; --_q) {
             if (disturb_queue.Count == 0) { return; }
             disturb_queue.Dequeue();
@@ -753,7 +769,7 @@ public class PlayManager : MonoBehaviour
     }
 
     // ゲームオーバーのチェック
-    bool check_gameover() {
+    private bool check_gameover() {
         // 2列目一番上のX印部分かその上が埋まっている場合ゲームオーバー
         if (field[0, 2].kind == BlockKind.NONE
          && field[1, 2].kind == BlockKind.NONE

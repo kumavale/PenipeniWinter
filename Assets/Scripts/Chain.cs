@@ -5,7 +5,7 @@ using UnityEngine;
 public class Chain : MonoBehaviour {
 
     // 連鎖ボーナス
-    private int[] chain_bonus = {
+    private static readonly int[] chain_bonus = {
         0,    // 1連鎖
         8,    // 2連鎖
         16,   // 3連鎖
@@ -25,7 +25,7 @@ public class Chain : MonoBehaviour {
     }
 
     // 連結ボーナス
-    private int[] link_bonus = {
+    private static readonly int[] link_bonus = {
         0,   // 3個
         2,   // 4個
         3,   // 5個

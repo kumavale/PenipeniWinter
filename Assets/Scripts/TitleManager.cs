@@ -16,7 +16,7 @@ public class TitleManager : MonoBehaviour
     private bool fixed_position_now = true;
 
     // Start is called before the first frame update
-    void Start() {
+    private void Start() {
         transforms = new Transform[7];
 
         for (int i = 0; i < 7; ++i) {
@@ -25,13 +25,13 @@ public class TitleManager : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update() {
+    private void Update() {
         if (Input.GetKey(KeyCode.Return)) {
             SceneManager.LoadScene("main");
         }
     }
 
-    void FixedUpdate() {
+    private void FixedUpdate() {
         if (fixed_position_now) {
             // [PRESS Enter] の表示/非表示
             press_enter.SetActive(!press_enter.activeSelf);

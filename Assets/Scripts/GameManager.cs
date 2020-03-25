@@ -8,24 +8,24 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [SerializeField]
-    GameObject p1 = default,
-               p2 = default;
+    private GameObject p1 = default,
+                       p2 = default;
 
     [SerializeField]
-    GameObject canvas_gameover = default;
+    private GameObject canvas_gameover = default;
     [SerializeField]
-    GameObject canvas_pause = default;
+    private GameObject canvas_pause = default;
 
-    private static DateTime unix_epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+    private readonly DateTime unix_epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
     // Start is called before the first frame update
-    void Start() {
-        // init seed
-        //gen_seed();
-    }
+    //void Start() {
+    //    // init seed
+    //    //gen_seed();
+    //}
 
     // Update is called once per frame
-    void Update() {
+    private void Update() {
         // ESCキーで Pause menu
         if (Input.GetKeyDown(KeyCode.Escape) && !canvas_gameover.activeSelf) {
             p1.SetActive(false);
@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
     }
 
     // フォーカスがない時、ポーズ画面を表示
-    void OnApplicationFocus(bool has_focus) {
+    private void OnApplicationFocus(bool has_focus) {
         if (!has_focus && !canvas_gameover.activeSelf) {
             p1.SetActive(false);
             p2.SetActive(false);
