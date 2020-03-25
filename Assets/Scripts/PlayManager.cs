@@ -102,6 +102,7 @@ public class PlayManager : MonoBehaviour
 
     // コルーチンの復帰用キュー
     private Queue<IEnumerator> coroutines = new Queue<IEnumerator>();
+    private IEnumerator coroutine_move_x = default;
 
     // アニメーション
     [SerializeField]
@@ -142,8 +143,12 @@ public class PlayManager : MonoBehaviour
     }
 
     private void OnEnable() {
+        // コルーチンの再開
         foreach (var coroutine in coroutines) {
             StartCoroutine(coroutine);
+        }
+        if (coroutine_move_x != null) {
+            StartCoroutine(coroutine_move_x);
         }
     }
 
@@ -206,11 +211,13 @@ public class PlayManager : MonoBehaviour
                 // A key
                 if (Input.GetKeyDown(KeyCode.A)) {
                     key_lock = true;
-                    StartCoroutine(move_x(-1));
+                    coroutine_move_x = move_x(-1);
+                    StartCoroutine(coroutine_move_x);
                 // D key
                 } else if (Input.GetKeyDown(KeyCode.D)) {
                     key_lock = true;
-                    StartCoroutine(move_x(1));
+                    coroutine_move_x = move_x(1);
+                    StartCoroutine(coroutine_move_x);
                 // S key
                 } else if (Input.GetKey(KeyCode.S)) {
                     if (can_fall(-0.2f)) {
@@ -225,11 +232,13 @@ public class PlayManager : MonoBehaviour
                 // LeftArrow key
                 if (Input.GetKeyDown(KeyCode.LeftArrow)) {
                     key_lock = true;
-                    StartCoroutine(move_x(-1));
+                    coroutine_move_x = move_x(-1);
+                    StartCoroutine(coroutine_move_x);
                 // RightArrow key
                 } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
                     key_lock = true;
-                    StartCoroutine(move_x(1));
+                    coroutine_move_x = move_x(1);
+                    StartCoroutine(coroutine_move_x);
                 // DownArrow key
                 } else if (Input.GetKey(KeyCode.DownArrow)) {
                     if (can_fall(-0.2f)) {
@@ -615,6 +624,7 @@ public class PlayManager : MonoBehaviour
             }
         }
 
+        coroutine_move_x = null;
         key_lock = false;
     }
 

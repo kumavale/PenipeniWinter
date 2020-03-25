@@ -45,7 +45,7 @@ public class UIAdjuster : MonoBehaviour {
             if (changed_x || changed_y) {
                 // タイトル画面の場合はウィンドウサイズの調整のみ
                 if (gm != null) {
-                    gm.display_pose();
+                    gm.display_pause();
                 }
             }
 

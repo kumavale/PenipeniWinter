@@ -28,12 +28,12 @@ public class GameManager : MonoBehaviour
     private void Update() {
         // ESCキーで Pause menu
         if (Input.GetKeyDown(KeyCode.Escape)) {
-            display_pose();
+            display_pause();
         }
     }
 
     // ポーズメニューを表示
-    public void display_pose() {
+    public void display_pause() {
         // ゲームオーバー画面, ポーズ画面共に表示されていないなら表示する
         if (!canvas_gameover.activeSelf && !canvas_pause.activeSelf) {
             p1.SetActive(false);
