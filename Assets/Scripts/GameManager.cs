@@ -27,7 +27,15 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     private void Update() {
         // ESCキーで Pause menu
-        if (Input.GetKeyDown(KeyCode.Escape) && !canvas_gameover.activeSelf) {
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+            display_pose();
+        }
+    }
+
+    // ポーズメニューを表示
+    public void display_pose() {
+        // ゲームオーバー画面, ポーズ画面共に表示されていないなら表示する
+        if (!canvas_gameover.activeSelf && !canvas_pause.activeSelf) {
             p1.SetActive(false);
             p2.SetActive(false);
             canvas_pause.SetActive(true);
