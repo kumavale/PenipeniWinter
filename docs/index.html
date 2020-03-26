@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>PenipeniWinter</title>
+        <script src="Build/UnityLoader.js"></script>
+        <script>
+            UnityLoader.instantiate("unityContainer", "Build/build.json");
+        </script>
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+        <div class="main-box box">
+            <div class="webgl-content">
+                <div id="unityContainer" style="width: 810px; height: 580px; margin: auto"></div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="side-box box">
+            <div class="introduction-box box">
+                <h2> 紹介 </h2>
+                宇宙よりも遠い場所(5話)より登場した「ぺにぺにWINTER」の再現
+                <br />
+                <br />
+
+                <h2> 操作方法 </h2>
+                <table border="0">
+                    <tr><td align="center">A, D</td><td>左右移動</td></tr>
+                    <tr><td align="center">S</td><td>高速落下</td></tr>
+                    <tr><td align="center">Escape</td><td>一時停止</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="rule-box box">
+            <h2> ルール </h2>
+            <ul>
+                <li> 落下してきたぺにがフィールドの床やほかのぺにやお邪魔に衝突すると、その位置にぷよが固定される。 </li>
+                <li> 同色のぺにが3個以上くっつくと消滅し得点となる。 </li>
+                <li> 左から2列目が一番上もしくはその上まで埋まるとゲームオーバー。 </li>
+                <li> ぺに消滅時、L字に消えた場合相手フィールドにL字(3マス分)のお邪魔を降らせることが出来る。また、同色4つを水平に繋げて消すと、相手フィールドに横長(4マス分)のお邪魔を降らせることが出来る。 </li>
+            </ul>
+        </div>
+    </body>
+</html>
+
