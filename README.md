@@ -1,18 +1,19 @@
 # ぺにぺにWINTER
 ![stable](https://img.shields.io/badge/build-passing-success.svg)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)  
-宇宙よりも遠い場所(5話)より登場した「ぺにぺにWINTER」の再現
+宇宙よりも遠い場所(5話)より登場した「ぺにぺにWINTER」の再現  
+WebGL版は[こちら](https://kumavale.github.io/PenipeniWinter/)  
   
 ![ScreenShot](https://user-images.githubusercontent.com/29778890/77157339-7b2f3300-6ae4-11ea-8920-5a9abddbcc04.png)  
   
 ## 操作方法
 
-| Action | Keys |
-| :----- | ---- |
-| Left   | A    |
-| Right  | D    |
-| Down   | S    |
-| Menu   | Escape |
+| Keys   | Action |
+| :---:  | :----: |
+| A      | 左移動   |
+| D      | 右移動   |
+| S      | 高速落下 |
+| Escape | 一時停止 |
 
 ## ゲームシステム
 
@@ -23,3 +24,6 @@
 * ぺにの消滅により上にあったぺにが落下する。このとき再びぺにが3個以上くっつくと消滅し、連鎖が起きる。なお、普通に3つ色を並べて消す行為だけでも1連鎖と考え、消滅した回数（○回）に応じて○連鎖と呼ばれる。複数色を同時に消した場合や同色を別箇所で消した場合でも、1連鎖扱いとなる。  
 * 左から2列目が一番上かその上まで埋まるとゲームオーバー。
 * ぺに消滅時、L字に消えた場合相手フィールドにL字(3マス分)のお邪魔を降らせることが出来る。また、同色4つを水平に繋げて消すと、相手フィールドに横長(4マス分)のお邪魔を降らせることが出来る。 そして、L字かつ水平に消した場合は7個以上連結して消した場合、L字と横長の両方のお邪魔を降らせることができ、7個未満の場合は横長のお邪魔が優先される。  
+
+## 必要要件
+Unity 2019.1以上
