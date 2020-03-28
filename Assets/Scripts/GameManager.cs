@@ -18,12 +18,6 @@ public class GameManager : MonoBehaviour
 
     private readonly DateTime unix_epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
-    // Start is called before the first frame update
-    //void Start() {
-    //    // init seed
-    //    //gen_seed();
-    //}
-
     // Update is called once per frame
     private void Update() {
         // ESCキーで Pause menu
@@ -59,6 +53,11 @@ public class GameManager : MonoBehaviour
     }
 
     public void GameOver(GameObject player) {
+        GameObject[] penis = GameObject.FindGameObjectsWithTag("peni");
+        foreach (GameObject peni in penis) {
+            StartCoroutine(splatter(peni));
+        }
+
         p1.SetActive(false);
         p2.SetActive(false);
 
@@ -99,5 +98,15 @@ public class GameManager : MonoBehaviour
 
     public void Press_button_title() {
         SceneManager.LoadScene("title");
+    }
+
+
+    // ぺにとお邪魔をランダムに飛び散らす
+    private IEnumerator splatter(GameObject peni) {
+        float x = UnityEngine.Random.Range(-0.1f, 0.1f);
+        for (int _i = 0; _i < 100; ++_i) {
+            peni.transform.position = peni.transform.position + new Vector3(x, -0.15f, 0);
+            yield return null;
+        }
     }
 }
