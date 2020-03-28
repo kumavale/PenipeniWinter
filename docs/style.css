@@ -1,4 +1,10 @@
 .webgl-content * {border: 0; margin: 0; padding: 0}
+.webgl-content {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 /* .webgl-content {position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);} */
 
 .webgl-content .logo, .progress {position: absolute; left: 50%; top: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);}
@@ -21,10 +27,15 @@
     box-sizing: border-box;
 }
 
+.side-box {
+    position: absolute;
+    top: 600px;
+}
+
 /*boxのデザイン*/
 .rule-box, .introduction-box {
     float: left;
-    height: 256px;
+    height: 400px;
     width: 48%;
     min-width: 390px;
     margin: 5px;
@@ -32,7 +43,7 @@
     background: rgb(250, 250, 250);
     border-top: solid 10px rgb(168, 231, 40);
     box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.4);
-    font-size: 12px;
+    font-size: 16px;
 }
 
 body {
