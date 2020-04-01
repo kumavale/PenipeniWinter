@@ -191,8 +191,9 @@ public class PlayManager : MonoBehaviour
         current_peni = spawnNext();
     }
 
-    /// Update is called once per frame
-    private void Update() {
+    // FixedUpdate is called once per 0.016 sec
+    // 62.5fps
+    private void FixedUpdate() {
         if (fall_lock) {
             if (coroutines.Count == 0) {
                 if (after_falling_invoked) {
