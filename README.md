@@ -10,9 +10,9 @@ WebGL版は[こちら](https://kumavale.github.io/PenipeniWinter/)
 
 | Keys   | Action |
 | :---:  | :----: |
-| A      | 左移動   |
-| D      | 右移動   |
-| S      | 高速落下 |
+| A, ←   | 左移動   |
+| D, →   | 右移動   |
+| S, ↓   | 高速落下 |
 | Escape | 一時停止 |
 
 ## ゲームシステム

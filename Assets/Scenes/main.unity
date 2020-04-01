@@ -996,7 +996,7 @@ GameObject:
   - component: {fileID: 408232680}
   - component: {fileID: 408232679}
   m_Layer: 5
-  m_Name: 2p
+  m_Name: CPU
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1034,7 +1034,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.46257564, g: 0.9339623, b: 0.47778165, a: 1}
+  m_Color: {r: 0.9964464, g: 1, b: 0.9198113, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1054,7 +1054,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 2P
+  m_Text: CP
 --- !u!222 &408232680
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1675,7 +1675,7 @@ GameObject:
   - component: {fileID: 1046323378}
   - component: {fileID: 1046323377}
   m_Layer: 5
-  m_Name: Out_2p
+  m_Name: Out_CPU
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1749,7 +1749,7 @@ GameObject:
   - component: {fileID: 1124130411}
   - component: {fileID: 1124130410}
   m_Layer: 5
-  m_Name: Score_2p_back
+  m_Name: Score_CPU_back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2233,7 +2233,7 @@ GameObject:
   - component: {fileID: 1439092838}
   - component: {fileID: 1439092840}
   m_Layer: 0
-  m_Name: 2P
+  m_Name: CPU
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2259,7 +2259,7 @@ MonoBehaviour:
   disturbs:
   - {fileID: 2892236041597481353, guid: 8b9149d6a2838a248aa638cc3e3e0ff8, type: 3}
   - {fileID: 4116993006448499085, guid: e108e3a5e7382814a8b61effb5bd8762, type: 3}
-  player: 2
+  player: 1
   score_object: {fileID: 1964651730}
   seed: 0
   peni_jump: {fileID: 1820006612}
@@ -2810,7 +2810,7 @@ GameObject:
   - component: {fileID: 1964651732}
   - component: {fileID: 1964651734}
   m_Layer: 5
-  m_Name: Score_2p_text
+  m_Name: Score_CPU_text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3392,7 +3392,7 @@ GameObject:
   - component: {fileID: 2088308904}
   - component: {fileID: 2088308903}
   m_Layer: 5
-  m_Name: Frame_2p
+  m_Name: Frame_CPU
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

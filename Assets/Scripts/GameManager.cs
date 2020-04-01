@@ -4,6 +4,8 @@ using UnityEngine;
 
 using System;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class GameManager : MonoBehaviour
 {
@@ -21,7 +23,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     private void Update() {
         // ESCキーで Pause menu
-        if (Input.GetKeyDown(KeyCode.Escape)) {
+        if (Keyboard.current.escapeKey.wasPressedThisFrame) {
             display_pause();
         }
     }

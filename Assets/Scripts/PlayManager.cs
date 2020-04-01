@@ -6,6 +6,8 @@ using UnityEngine.UI;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class PlayManager : MonoBehaviour
 {
@@ -38,7 +40,7 @@ public class PlayManager : MonoBehaviour
     }
 
     [SerializeField]
-    private Player player = Player.PLAYER_1;
+    private Player player = default;
 
     [SerializeField]
     private GameObject score_object = default;
@@ -50,7 +52,6 @@ public class PlayManager : MonoBehaviour
 
     public enum Player {
         PLAYER_1,
-        PLAYER_2,
         CPU,
     }
 
@@ -207,19 +208,20 @@ public class PlayManager : MonoBehaviour
                 }
             }
         } else if (!key_lock) {
+            // Player
             if (player == Player.PLAYER_1) {
                 // A key
-                if (Input.GetKeyDown(KeyCode.A)) {
+                if (Keyboard.current.aKey.wasPressedThisFrame || Keyboard.current.leftArrowKey.wasPressedThisFrame) {
                     key_lock = true;
                     coroutine_move_x = move_x(-1);
                     StartCoroutine(coroutine_move_x);
                 // D key
-                } else if (Input.GetKeyDown(KeyCode.D)) {
+                } else if (Keyboard.current.dKey.wasPressedThisFrame || Keyboard.current.rightArrowKey.wasPressedThisFrame) {
                     key_lock = true;
                     coroutine_move_x = move_x(1);
                     StartCoroutine(coroutine_move_x);
                 // S key
-                } else if (Input.GetKey(KeyCode.S)) {
+                } else if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
                         score_add(1);
@@ -228,28 +230,8 @@ public class PlayManager : MonoBehaviour
                     }
                 }
 
-            } else if (player == Player.PLAYER_2) {
-                // LeftArrow key
-                if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-                    key_lock = true;
-                    coroutine_move_x = move_x(-1);
-                    StartCoroutine(coroutine_move_x);
-                // RightArrow key
-                } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-                    key_lock = true;
-                    coroutine_move_x = move_x(1);
-                    StartCoroutine(coroutine_move_x);
-                // DownArrow key
-                } else if (Input.GetKey(KeyCode.DownArrow)) {
-                    if (can_fall(-0.2f)) {
-                        move_y(-0.2f);
-                        score_add(1);
-                    } else {
-                        fix();
-                    }
-                }
+            // CPU
             } else {
-                // CPU
                 if (fall_bottom) {
                     if (can_fall(-0.2f)) {
                         move_y(-0.2f);
